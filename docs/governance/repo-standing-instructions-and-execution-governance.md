@@ -42,22 +42,27 @@ Use this structure for every batch report in `docs/phase-reports/`:
 - [ ] Great Expectations suite reports 100% success on schema validation.
 
 ## 3. Command Log Policy
-Maintain and update command logs under `docs/command/`. This is critical for the "Runbook" deliverable:
-- `databricks-commands.md` (CLI, Workspace, Cluster mgmt)
-- `dbt-commands.md` (Seeds, Run, Test, Snapshots)
-- `pyspark-commands.md` (Spark-shell, Job submissions)
-- `airflow-commands.md` (DAG triggers, Task logs)
-- `airbyte-commands.md` (Connection resets, Sync triggers)
-- `docker-commands.md` (Codespace service orchestration)
-- `git-commands.md` (Commit, Branching, LFS)
-- `ge-commands.md` (Great Expectations suite initialization)
-- `monte-carlo-commands.md` (Collector setup and monitors)
-- `make-commands.md`
+Maintain and update command logs under `docs/command/`. This is critical for the "Runbook" deliverable.
+
+Command logging is mandatory across the full project lifecycle:
+- No command category is excluded.
+- Every command run for implementation, validation, deployment, or troubleshooting must be documented.
+- Use `docs/command/README.md` as the command register and append entries in the appropriate category file.
+
+Minimum required command log files:
+- `databricks-commands.md` (legacy track evidence)
+- `duckdb-commands.md` (active local execution track)
+- `dbt-commands.md`
+- `phase-2-commands.md`
+- `phase-2-autoloader-commands.md`
 - `bash-shell-commands.md`
-- `lint-commands.md`
-- `streamlit-commands.md`
+- `make-commands.md`
+- `git-commands.md`
 - `github-actions-commands.md`
 - `python-commands.md`
+- `airflow-commands.md`
+- `airbyte-commands.md`
+- `docker-commands.md`
 
 ## 4. Deliverables Index Policy
 The `README.md` must serve as the **Thesis Portfolio Map**.

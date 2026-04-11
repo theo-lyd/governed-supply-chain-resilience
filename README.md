@@ -3,6 +3,7 @@ A production-grade Analytics Engineering framework for predictive logistics. It 
 
 ## Portfolio Navigation
 - Phase report templates and reporting guide: [docs/phase-reports/README.md](docs/phase-reports/README.md)
+- Command logs index: [docs/command/README.md](docs/command/README.md)
 - DuckDB command log: [docs/command/duckdb-commands.md](docs/command/duckdb-commands.md)
 
 ## Thesis Portfolio Map
