@@ -128,6 +128,16 @@ Goal: Ingest multi-modal logistics data (IoT and ERP-like records) reliably and 
   - Configure Autoloader to detect and process newly arrived IoT files.
   - Demonstrate cost-aware streaming-lite ingestion versus always-on streaming clusters.
 
+#### Execution Status (2026-04-11)
+- Implemented in repository:
+  - `scripts/autoloader_bronze.py`
+  - `docs/command/phase-2-autoloader-commands.md`
+  - `docs/phase-reports/SCR-P2-B2.2-report.md`
+- Batch 2.2 Status:
+  - 🔄 IN PROGRESS
+  - Autoloader entrypoint and runbook created.
+  - Pending: Databricks runtime execution and new-file detection evidence.
+
 ### Phase 2 Exit Criteria
 - Bronze ingestion works through at least one reliable path and is reproducible.
 - Late file arrivals are detectable and processed.

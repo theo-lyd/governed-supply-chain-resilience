@@ -106,3 +106,4 @@
   - Airbyte extension path remains deferred until MVP gate confirmation.
 - Next Batch Recommendation:
   - Proceed to Batch 2.2 Autoloader logic and incremental checkpointing validation.
+  - Target catalog fallback in current workspace: `workspace`
