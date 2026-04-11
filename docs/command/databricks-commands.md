@@ -1,6 +1,6 @@
 # Databricks Commands
 
-This log captures commands for Batch 1.1 (Connectivity and Security Setup).
+This log captures commands for Batch 1.1 and Batch 1.2 (Connectivity, Security Setup, and Environment Containerization).
 
 ## Required Parameters and Where to Get Them
 
@@ -20,6 +20,29 @@ This log captures commands for Batch 1.1 (Connectivity and Security Setup).
 - How to get it:
 	- Databricks -> User Settings -> Developer -> Access tokens -> Generate new token.
 	- Copy token once and store it in GitHub Codespaces Secrets.
+
+### PAT scope guidance
+- Minimum for Batch 1.1: `workspace`
+- Recommended for Batch 1.2 and beyond: `workspace`, `unity-catalog`, `access-management`
+- If you rotate the token, reopen the terminal after refreshing Codespaces Secrets so the new PAT is loaded.
+
+### Unity Catalog storage root guidance
+- Batch 1.2 catalog creation also needs a metastore storage root or managed location.
+- Provide `UNITY_CATALOG_STORAGE_ROOT` as a cloud storage path approved for your workspace, or create the catalog from the Databricks UI using the metastore's default storage if your admin has enabled it.
+- If this value is missing, catalog creation will fail even when the PAT scopes are correct.
+
+### Cost-constrained mode (no AWS account required)
+- If you cannot create a paid cloud account, run Batch 1.2 with Unity Catalog provisioning disabled.
+- This keeps the project moving with Databricks + dbt using `hive_metastore` as default catalog.
+- Command:
+```bash
+ENABLE_UNITY_CATALOG=0 ./scripts/bootstrap_phase_1_2.sh
+```
+- Optional env vars for explicit non-UC catalog/schema naming:
+	- `DATABRICKS_CATALOG_DEV` (default: `hive_metastore`)
+	- `DATABRICKS_SCHEMA_DEV` (default: `analytics`)
+	- `DATABRICKS_CATALOG_PROD` (default: `hive_metastore`)
+	- `DATABRICKS_SCHEMA_PROD` (default: `analytics`)
 
 ### Add values to GitHub Codespaces Secrets
 - GitHub repository -> Settings -> Secrets and variables -> Codespaces.
@@ -70,3 +93,5 @@ databricks current-user me
 - Do not commit PAT values.
 - PAT, host, and HTTP path must be sourced from Codespaces Secrets.
 - Commands above may vary slightly by Databricks CLI version.
+- If you regenerate the PAT with broader scopes, rerun `./scripts/bootstrap_phase_1_2.sh` to verify Unity Catalog access with the new token.
+- If catalog creation still fails after token rotation, verify the Unity Catalog storage root or managed location next.

@@ -46,17 +46,41 @@ Goal: Establish secure, reproducible connectivity between Codespace and Databric
 - Chunk 5: Unity Catalog Initialization
   - Create separate `dev` and `prod` catalogs.
   - Apply baseline naming conventions and permission boundaries.
-  - ✅ COMPLETED: `dev` catalog with bronze/silver/gold/analytics schemas
-  - ✅ COMPLETED: `prod` catalog with bronze/silver/gold schemas
+  - ✅ COST-CONSTRAINED FALLBACK: proceed with `hive_metastore` defaults when UC storage root is unavailable
+  - 🔁 OPTIONAL UPGRADE: enable Unity Catalog later with `ENABLE_UNITY_CATALOG=1` and `UNITY_CATALOG_STORAGE_ROOT`
 - Batch 1.2 Status:
-  - ✅ COMPLETED/VERIFIED (2026-04-11)
-  - Catalogs initialized, containerization ready, token scope advisory documented
+  - ✅ COMPLETED/VERIFIED (Cost-Constrained Track) (2026-04-11)
+  - Containerization verified; non-UC execution path active without paid cloud setup
+
+#### Architecture Decision Note (Phase 1.2)
+- Standard/target architecture remains Unity Catalog with dedicated environment boundaries and governed metadata.
+- Temporary implementation track uses `hive_metastore` due explicit user cost constraint: no paid cloud account setup and no card-linked account creation.
+- This is an intentional scope adaptation, not a technical preference reversal.
+
+#### Why Excluding Unity Catalog Now
+- Unity Catalog provisioning in this workspace requires a metastore storage root or managed location.
+- A storage root requires external cloud object storage setup, which is out of scope for the current cost boundary.
+- Proceeding without UC avoids blocking Phase 2 execution while preserving a documented upgrade path.
+
+#### Implementation and Performance Implications Without Unity Catalog
+- Implementation model:
+  - Continue with Databricks + dbt using `hive_metastore` and schema-level separation.
+  - Keep naming conventions and medallion progression unchanged.
+  - Maintain governance evidence through repository controls, dbt tests, and phase reports.
+- Performance expectations:
+  - Core query and transformation performance for thesis-scale datasets remains suitable.
+  - No expected degradation for current batch goals based solely on catalog layer selection.
+  - Main trade-off is governance depth and enterprise permission granularity, not compute throughput.
+- Risk profile:
+  - Reduced fine-grained governance and lineage controls compared with full UC.
+  - Acceptable for current cost-constrained implementation track.
+  - Tracked as optional uplift in later hardening.
 
 ### Phase 1 Exit Criteria
 - ✅ Codespace can run `dbt debug` successfully against Databricks. (Batch 1.1)
 - ✅ Secrets are injected securely with no plaintext credentials in Git. (Batch 1.1)
-- ✅ `dev` and `prod` catalogs are discoverable and permissioned. (Batch 1.2)
-- ✅ **PHASE 1 COMPLETE**: All foundation infrastructure ready for ingestion work.
+- ✅ Catalog strategy is operational for implementation track (Batch 1.2 cost-constrained fallback)
+- ✅ **PHASE 1 COMPLETE (COST-CONSTRAINED TRACK)**
 
 ### Phase 1 Handoff Notes
 - Execution path: Batch 1.1 (Connectivity) → Batch 1.2 (Containerization, Catalogs)

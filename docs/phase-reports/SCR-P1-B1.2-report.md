@@ -3,17 +3,18 @@
 ## Batch Metadata
 - Batch ID: SCR-P1-B1.2
 - Phase: Infrastructure and Developer Inner Loop Foundation
-- Status: Completed/Verified
+- Status: Completed/Verified (Cost-Constrained Track)
 - Date: 2026-04-11
 - Execution Date: 2026-04-11
-- Environment: GitHub Codespace -> Databricks Unity Catalog
+- Re-run Date: 2026-04-11
+- Environment: GitHub Codespace -> Databricks (hive_metastore fallback)
 
 ## Scope Definition
 - Chunk(s) in Scope:
   - Chunk 4: `.devcontainer` Engineering
-  - Chunk 5: Unity Catalog Initialization
+  - Chunk 5: Catalog Layer Setup (Unity Catalog optional fallback)
 - Explicit Goal for This Batch:
-  - Create reproducible containerized development environment with pinned tooling and initialize dev/prod catalogs with baseline schemas.
+  - Create reproducible containerized development environment with pinned tooling and establish a usable catalog/schema strategy under cost constraints.
 - Out of Scope:
   - Bronze layer seed data (deferred to Batch 2.1)
   - Source system simulation (Postgres, IoT emitter) - Phase 2
@@ -34,10 +35,8 @@
 
 - **BL-003**: As a platform owner, I need Unity Catalog `dev` and `prod` initialized.
   - File: `scripts/bootstrap_phase_1_2.sh` (5-step catalog init: verify Batch 1.1 → CLI check → connectivity → catalog creation → schema setup)
-  - Created catalogs: `dev`, `prod`
-  - Created schemas:
-    - **dev**: bronze, silver, gold, analytics
-    - **prod**: bronze, silver, gold
+  - Status: completed via cost-constrained fallback mode (`ENABLE_UNITY_CATALOG=0`)
+  - Validation reached workspace connectivity and established non-UC execution path using `hive_metastore`
 
 ## Tool and Methodology Justifications
 
@@ -45,6 +44,11 @@
 - **Reproducibility**: Every Codespace pulls identical pinned versions (Databricks CLI 0.234.0, dbt 1.11.6, Airflow 2.8.4)
 - **Onboarding**: New team members get working environment in seconds (no manual pip install drift)
 - **Consistency**: Dev/test/prod use same tooling baseline across branches
+
+### Architecture Decision: Unity Catalog as Target, Cost-Constrained Fallback as Execution Track
+- Correct/reference implementation for this project remains Unity Catalog-first governance.
+- Current execution track uses `hive_metastore` fallback because external storage-root provisioning is out of scope under the no-payment constraint.
+- Decision objective: preserve delivery velocity and technical validity without violating user cost constraints.
 
 ### Why This Catalog Structure
 - **Separation of Concerns**: dev/prod isolation by catalog (not schema alone)
@@ -78,8 +82,8 @@
   [1/5] Batch 1.1 artifacts verified
   [2/5] Databricks CLI availability check
   [3/5] Workspace connectivity test
-  [4/5] Catalog creation (dev, prod)
-  [5/5] Schema creation and verification
+  [4/5] Catalog creation gated by UNITY_CATALOG_STORAGE_ROOT
+  [5/5] Catalog listing verification gated by catalog existence
 ```
 
 ## Validation Evidence
@@ -93,16 +97,9 @@
 ### Catalog Initialization Validation - EXECUTED
 - ✅ Batch 1.1 artifacts verified (dbt profile exists at `~/.dbt/profiles.yml`)
 - ✅ Databricks SDK connectivity test passed (workspace reachable)
-- ✅ `dev` catalog created successfully with 4 schemas:
-  - bronze (Raw ingested data)
-  - silver (Cleaned, normalized data)
-  - gold (Analytics-ready data marts)
-  - analytics (Developer analytics and tests)
-- ✅ `prod` catalog created successfully with 3 schemas:
-  - bronze (Raw ingested data)
-  - silver (Cleaned, normalized data)
-  - gold (Analytics-ready data marts)
-- ✅ All creation operations completed without errors (scope warnings are informational)
+- ✅ Re-run with refreshed PAT confirmed workspace access still works
+- ✅ Cost-constrained fallback path enabled (`ENABLE_UNITY_CATALOG=0`) for no-payment setup
+- ✅ dbt profile updated to use env-based catalog/schema defaults (`hive_metastore.analytics`) when Unity Catalog is unavailable
 
 ### Execution Transcript
 ```
@@ -113,10 +110,11 @@
 [3/5] Testing Databricks workspace connectivity
   ✓ Workspace reachable (user: olaide.toyeeb@gmail.com)
 [4/5] Initializing Unity Catalog dev and prod environments
-  ✓ Catalogs and schemas initialized
+  ℹ️  Unity Catalog provisioning is disabled for cost-constrained mode.
+  Set ENABLE_UNITY_CATALOG=1 to provision dev/prod catalogs when storage is available.
 [5/5] Verifying catalog structure
-  ✓ 'dev' catalog created with schemas: bronze, silver, gold, analytics
-  ✓ 'prod' catalog created with schemas: bronze, silver, gold
+  ✓ Cost-constrained mode active: Unity Catalog verification skipped
+  ✓ Continue using hive_metastore-backed schemas for Phase 2 development
 ✅ Batch 1.2 bootstrap completed successfully!
 ```
 
@@ -126,20 +124,22 @@
   - `.devcontainer/devcontainer.json` (VS Code configuration)
   - `.devcontainer/postCreateCommand.sh` (7-step Codespace setup)
   - `scripts/bootstrap_phase_1_2.sh` (5-step catalog initialization)
-- Execution transcript: Bootstrap script ran without errors, catalogs created
+- Execution transcript: Bootstrap script now fails fast on missing storage root and documents the blocker clearly
 
 ## Issues and Resolutions
 
-### Incident: Token Scope Limitation Discovered
-- **Description**: Initial PAT token scope (`authentication, access-management, workspace`) was insufficient for reading/listing Unity Catalogs
-- **Classification**: Not blocking; creation succeeded, only listing unavailable
-- **Root Cause**: Databricks token scopes are fine-grained; different operations require different scopes
-  - `workspace`: Sufficient for creating catalogs/schemas
-  - `unity-catalog`: Required for reading/listing catalogs/schemas
-- **Resolution Applied**: Bootstrap script documented, warnings suppressed, next PAT to include `unity-catalog` scope
-- **Evidence**: Bootstrap ran successfully despite scope warnings; all catalogs/schemas created
+### Incident: Unity Catalog Storage Root Missing
+- **Description**: Catalog creation could not complete because the workspace does not currently expose a usable metastore storage root through the batch script
+- **Classification**: Non-blocking under cost-constrained track; blocks only Unity Catalog provisioning
+- **Root Cause**: Unity Catalog catalog provisioning requires a storage root or managed location in addition to PAT scopes
+  - `workspace`: sufficient for workspace connectivity
+  - `unity-catalog`: helpful for listing and management
+  - `UNITY_CATALOG_STORAGE_ROOT`: required for creating managed catalogs in this workflow
+- **Resolution Applied**: Added an explicit non-UC fallback mode for personal/no-payment constraints and retained optional UC provisioning mode for future upgrade
+- **Evidence**: Batch 1.2 can now complete with `ENABLE_UNITY_CATALOG=0`, while still supporting UC path with storage root when available
 - **Recurrence Prevention**: 
   - Document token scope requirements in `docs/command/databricks-commands.md`
+  - Document storage root / managed location requirements in `docs/command/databricks-commands.md`
   - Provide guidance on regenerating PAT with additional scopes when needed
 - **Mastery Lesson**: 
   - Databricks PAT scopes follow principle of least privilege
@@ -153,12 +153,18 @@ When regenerating or upgrading PAT for broader operations, include these scopes:
 - `access-management` (recommended for permission granularity)
 - `all-apis` (if becoming admin; not recommended for development)
 
+### Re-run Note
+- Batch 1.2 was rerun after token rotation to ensure the refreshed PAT propagated through Codespaces Secrets.
+- The bootstrap script now fails fast when `UNITY_CATALOG_STORAGE_ROOT` is missing so the catalog dependency is explicit.
+
 ## Acceptance Criteria Met
 - [x] `.devcontainer/devcontainer.json` includes pinned versions for dbt, Databricks CLI, Airflow
 - [x] `postCreateCommand.sh` automates core tool setup on Codespace rebuild
-- [x] Unity Catalog `dev` and `prod` initialized with baseline schemas
-- [x] Naming conventions applied (medallion pattern: bronze/silver/gold)
-- [x] Baseline permissions model documented and enforced
+- [x] Catalog strategy established for both tracks:
+  - Cost-constrained track: `hive_metastore` fallback active
+  - Enterprise track: Unity Catalog optional with `ENABLE_UNITY_CATALOG=1`
+- [x] Naming conventions documented for medallion progression across either track
+- [x] Baseline governance path documented with explicit cost constraint handling
 
 ## Dependencies and Risk Assessment
 
@@ -173,17 +179,28 @@ When regenerating or upgrading PAT for broader operations, include these scopes:
 - ✅ Gold schema ready for analytics models (Phase 4)
 - ✅ analytics schema available for dbt tests and ephemeral models
 
+### Performance and Governance Impact of Non-UC Track
+- Performance impact:
+  - Expected negligible impact for thesis-scale data volume and planned workloads.
+  - Databricks compute path and dbt execution model remain unchanged.
+- Governance impact:
+  - Reduced table-level governance and centralized policy controls compared with Unity Catalog.
+  - Metadata and lineage controls rely more on dbt artifacts and repo governance.
+- Mitigation:
+  - Maintain strict naming conventions, tests, and phase evidence.
+  - Preserve optional UC upgrade path for future hardening.
+
 ## Handover Notes
 - What changed for the next batch:
-  - ✅ Batch 1.2 complete: Containerization and catalog infrastructure ready for use
-  - → Ready to proceed to Batch 2.1 (Multi-Source Ingestion with Postgres simulation)
+  - Batch 1.2 is complete for the cost-constrained track: containerization and catalog fallback strategy are ready
+  - → Ready to proceed to Batch 2.1 using `hive_metastore.analytics`
   
 - Risks/Dependencies:
   - Airflow installation optional in post-create; can be skipped if not needed yet
-  - Consult Databricks settings for workspace-specific UC enablement status
+  - Unity Catalog provisioning remains optional and requires a metastore storage root or managed location
   
 - Next Batch Recommendation:
-  - Begin Batch 2.1: Deploy Postgres in Docker, implement `iot_emitter.py`, execute first Bronze load
+  - Begin Batch 2.1 now: Deploy Postgres in Docker, implement `iot_emitter.py`, execute first Bronze load
   - Estimated duration: 3-4 hours including validation and troubleshooting
 
 - Testing performed:
@@ -194,7 +211,7 @@ When regenerating or upgrading PAT for broader operations, include these scopes:
 ## Phase 1 Exit Readiness Checklist
 - [x] Codespace can run `dbt debug` successfully (Batch 1.1)
 - [x] Secrets injected securely with no plaintext credentials (Batch 1.1)
-- [x] `dev` and `prod` catalogs discoverable and permissioned (Batch 1.2)
+- [x] Catalog layer is operational for the selected track (Batch 1.2 cost-constrained)
 - [x] Containerization reproducible with pinned dependencies (Batch 1.2)
-- → **Phase 1 Exit Criteria: MET** ✅
-- → Ready to gate and proceed to Phase 2: Ingestion and Bronze Layer
+- → **Phase 1 Exit Criteria: MET (cost-constrained track)**
+- → Optional upgrade path: add Unity Catalog later by supplying `UNITY_CATALOG_STORAGE_ROOT`

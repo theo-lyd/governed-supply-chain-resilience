@@ -52,7 +52,6 @@ PYTHON_SDK_TEST
 echo "[4/5] Initializing Unity Catalog dev and prod environments"
 python3 << 'PYTHON_SDK_CATALOG'
 import os
-import sys
 from databricks.sdk import WorkspaceClient
 from urllib.parse import urlparse
 
@@ -66,11 +65,26 @@ client = WorkspaceClient(
     token=os.environ.get('DATABRICKS_TOKEN')
 )
 
+enable_uc = os.environ.get('ENABLE_UNITY_CATALOG', '0').strip().lower() in {'1', 'true', 'yes'}
+storage_root = os.environ.get('UNITY_CATALOG_STORAGE_ROOT', '').strip()
+
+if not enable_uc:
+    print("  ℹ️  Unity Catalog provisioning is disabled for cost-constrained mode.")
+    print("  Set ENABLE_UNITY_CATALOG=1 to provision dev/prod catalogs when storage is available.")
+    raise SystemExit(0)
+
+if not storage_root:
+    print("  ❌ ERROR: ENABLE_UNITY_CATALOG=1 but UNITY_CATALOG_STORAGE_ROOT is not set.")
+    print("  Unity Catalog catalog creation requires a metastore storage root or managed location.")
+    print("  Set UNITY_CATALOG_STORAGE_ROOT to a workspace-approved cloud storage path and rerun.")
+    raise SystemExit(1)
+
 # Create dev catalog
 try:
     client.catalogs.create(
         name="dev",
-        comment="Development environment for SCR Engineering"
+        comment="Development environment for SCR Engineering",
+        storage_root=storage_root
     )
     print("  ✓ Created 'dev' catalog")
 except Exception as e:
@@ -83,7 +97,8 @@ except Exception as e:
 try:
     client.catalogs.create(
         name="prod",
-        comment="Production environment for SCR Analytics"
+        comment="Production environment for SCR Analytics",
+        storage_root=storage_root
     )
     print("  ✓ Created 'prod' catalog")
 except Exception as e:
@@ -134,7 +149,7 @@ for schema_name in prod_schemas:
 print("  ✓ Catalogs and schemas initialized")
 PYTHON_SDK_CATALOG
 
-# Step 5: List created catalogs and schemas (requires unity-catalog scope)
+# Step 5: List created catalogs and schemas
 echo "[5/5] Verifying catalog structure"
 python3 << 'PYTHON_VERIFY'
 import os
@@ -151,17 +166,29 @@ client = WorkspaceClient(
     token=os.environ.get('DATABRICKS_TOKEN')
 )
 
-print("")
-print("  Note: Listing catalogs and schemas requires 'unity-catalog' token scope.")
-print("  Catalogs created successfully (workspace scope sufficient for creation).")
-print("")
-print("  ✓ 'dev' catalog created with schemas: bronze, silver, gold, analytics")
-print("  ✓ 'prod' catalog created with schemas: bronze, silver, gold")
-print("")
-print("  To verify and manage catalogs, regenerate PAT with scopes:")
-print("  - workspace (already set)")
-print("  - unity-catalog (ADD THIS)")
-print("  - access-management (optional)")
+enable_uc = os.environ.get('ENABLE_UNITY_CATALOG', '0').strip().lower() in {'1', 'true', 'yes'}
+
+if not enable_uc:
+    print("")
+    print("  ✓ Cost-constrained mode active: Unity Catalog verification skipped")
+    print("  ✓ Continue using hive_metastore-backed schemas for Phase 2 development")
+    raise SystemExit(0)
+
+try:
+    dev_catalogs = [cat.name for cat in client.catalogs.list() if cat.name in ['dev', 'prod']]
+    dev_schemas = [schema.name for schema in client.schemas.list(catalog_name='dev')]
+    prod_schemas = [schema.name for schema in client.schemas.list(catalog_name='prod')]
+
+    print("")
+    print("  ✓ Catalog listing succeeded with the refreshed PAT")
+    print(f"  ✓ Visible catalogs: {', '.join(dev_catalogs) if dev_catalogs else 'none'}")
+    print(f"  ✓ dev schemas: {', '.join(dev_schemas) if dev_schemas else 'none'}")
+    print(f"  ✓ prod schemas: {', '.join(prod_schemas) if prod_schemas else 'none'}")
+except Exception as exc:
+    print("")
+    print("  ⚠️  Catalog listing could not be verified in this session.")
+    print(f"  Reason: {exc}")
+    print("  Creation still succeeded; if needed, regenerate PAT with unity-catalog scope and rerun.")
 PYTHON_VERIFY
 
 echo ""
@@ -171,3 +198,6 @@ echo "Next steps:"
 echo "  1. Run: dbt seed --target dev      (to load reference data)"
 echo "  2. Run: dbt docs generate          (to create lineage docs)"
 echo "  3. Proceed to Batch 2.1: Ingestion"
+echo ""
+echo "Optional Unity Catalog path later:"
+echo "  ENABLE_UNITY_CATALOG=1 UNITY_CATALOG_STORAGE_ROOT=s3://... ./scripts/bootstrap_phase_1_2.sh"
