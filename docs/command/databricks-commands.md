@@ -1,5 +1,7 @@
 # Databricks Commands
 
+> Legacy track notice (2026-04-11): This document is retained as historical evidence from the Databricks execution track. The active execution path for this repository is now DuckDB-native in Codespaces. Use `docs/command/duckdb-commands.md` for current commands.
+
 This log captures commands for Batch 1.1 and Batch 1.2 (Connectivity, Security Setup, and Environment Containerization).
 
 ## Required Parameters and Where to Get Them

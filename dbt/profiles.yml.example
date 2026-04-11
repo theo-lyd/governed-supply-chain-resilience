@@ -2,21 +2,13 @@ governed_supply_chain_resilience:
   target: dev
   outputs:
     dev:
-      type: databricks
-      method: http
-      catalog: "{{ env_var('DATABRICKS_CATALOG_DEV', 'workspace') }}"
-      schema: "{{ env_var('DATABRICKS_SCHEMA_DEV', 'analytics') }}"
-      host: "{{ env_var('DATABRICKS_HOST') }}"
-      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
-      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', 'data/duckdb/scr.duckdb') }}"
+      schema: "{{ env_var('DUCKDB_SCHEMA_DEV', 'analytics') }}"
       threads: 4
 
     prod:
-      type: databricks
-      method: http
-      catalog: "{{ env_var('DATABRICKS_CATALOG_PROD', 'workspace') }}"
-      schema: "{{ env_var('DATABRICKS_SCHEMA_PROD', 'analytics') }}"
-      host: "{{ env_var('DATABRICKS_HOST') }}"
-      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
-      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', 'data/duckdb/scr.duckdb') }}"
+      schema: "{{ env_var('DUCKDB_SCHEMA_PROD', 'analytics_prod') }}"
       threads: 8

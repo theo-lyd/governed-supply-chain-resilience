@@ -4,9 +4,9 @@
 Supply Chain Resilience Engine and Risk Monitor
 
 ## 2. Executive Summary
-The Supply Chain Resilience Engine is a thesis-grade analytics engineering platform that improves logistics visibility, resilience, and decision-making. It combines real-time IoT telemetry with historical ERP and supplier data to detect delay risk, temperature excursions, data freshness failures, and supplier degradation before these issues become service failures or financial losses.
+The Supply Chain Resilience Engine is a thesis-grade analytics engineering platform that improves logistics visibility, resilience, and decision-making. It combines real-time IoT telemetry with historical ERP and supplier data to detect delay risk, temperature excursions, freshness failures, and supplier degradation before these issues become service failures or financial losses.
 
-The project is designed to demonstrate a production-style workflow in which all code is authored in GitHub Codespace, executed on Databricks, validated with dbt and data quality controls, and documented for reproducibility. It is intentionally framed as both an academic artifact and a realistic operating model for a Senior Analytics Engineer role.
+The project follows a DuckDB-native execution model in GitHub Codespaces: code is authored in Git, executed locally with reproducible scripts, validated with dbt and quality controls, and documented with phase-level evidence for thesis defense.
 
 ## 3. Problem Statement
 Global logistics teams often discover exceptions too late. By the time a delay, spoilage event, or supplier issue appears in a dashboard, the operational window for intervention has already narrowed.
@@ -27,8 +27,6 @@ The platform should enable users to:
 - Provide auditable, business-ready evidence for operational and compliance decisions.
 
 ## 5. Strategic Value
-The business value of the project is measured in operational resilience, financial protection, and governance maturity.
-
 ### Operational Value
 - Earlier intervention on at-risk shipments.
 - Improved routing and dispatch decisions.
@@ -40,21 +38,21 @@ The business value of the project is measured in operational resilience, financi
 - Improved control over value at risk for in-transit inventory.
 
 ### Governance Value
-- Reproducible development and execution across Codespace and Databricks.
+- Reproducible development and execution in Codespaces.
 - Strong lineage, auditability, and metadata discipline.
 - Privacy-aware handling of sensitive data.
 
 ## 6. Primary Stakeholders
-- Board of Directors: evaluates strategic value, risk posture, and thesis relevance.
-- Logistics Managers: use risk signals to intervene in active shipments.
-- Procurement and Supplier Managers: use supplier scorecards for negotiation and review.
-- Data and Analytics Teams: maintain the platform and extend models.
-- Compliance or Governance Stakeholders: review controls, lineage, and evidence.
+- Board of Directors
+- Logistics Managers
+- Procurement and Supplier Managers
+- Data and Analytics Teams
+- Compliance or Governance Stakeholders
 
 ## 7. Scope
 ### In Scope
-- Codespace-to-Databricks development workflow.
-- Bronze, Silver, and Gold data architecture.
+- Codespace-native development and execution workflow.
+- Bronze, Silver, and Gold data architecture in DuckDB.
 - German data normalization and AGS harmonization.
 - Supplier reliability historization with SCD Type 2.
 - Risk scoring and monitoring for shipments.
@@ -64,78 +62,72 @@ The business value of the project is measured in operational resilience, financi
 ### Out of Scope
 - Full enterprise ERP replacement.
 - Real-world production integration with all carrier systems.
-- Large-scale model training infrastructure beyond the thesis scope.
-- Manual editing of logic inside Databricks notebooks as a primary development method.
+- Large-scale distributed compute beyond thesis scope.
+- Manual editing as a primary development method outside Git-managed files.
 
 ## 8. Solution Overview
 The solution is organized as a medallion-style pipeline:
 - Bronze captures raw telemetry and source exports.
-- Silver cleans, standardizes, and normalizes the data.
+- Silver cleans, standardizes, and normalizes data.
 - Gold computes business-ready metrics, risk scores, and alert conditions.
 
-A developer inner loop ensures that all source code remains in Git-managed files, while Databricks provides remote execution and scalable compute. The same pattern is used for dbt models, Python models, validation logic, and orchestration.
+A developer inner loop ensures all source code remains Git-managed. Execution is local and reproducible via scripted bootstraps (`dbt`, Python, DuckDB), making the platform defensible under strict no-paid-cloud constraints.
 
 ### Stack Strategy and Delivery Sequence
-To balance feasibility with thesis quality, the implementation follows a layered stack strategy.
-
-- Core stack (mandatory for MVP): GitHub Codespace, Databricks, dbt-databricks, and one reliable ingestion path.
-- Extension stack (phase-two): Airbyte for external source synchronization and Airflow for orchestration where scheduling or chained execution adds clear thesis value.
-- Local fallback (optional): DuckDB for prototyping or contingency validation, not as the primary thesis execution engine.
-
-This sequencing prevents early tool overload while preserving the full production-grade narrative.
+- Core stack (mandatory for MVP): GitHub Codespace, DuckDB, dbt-duckdb, and one reliable ingestion path.
+- Extension stack (phase-two): Airbyte and Airflow where orchestration/source heterogeneity adds clear thesis value.
+- Optional future track: Databricks as an enterprise execution upgrade path, not the current primary runtime.
 
 ## 9. Key Deliverables
 - Thesis defense brief.
 - Technical project presentation.
 - Non-technical business blueprint.
-- Developer inner loop walkthrough.
+- Developer workflow walkthrough.
 - German data normalization appendix.
 - Project runbook and phase reports.
 - SLA and observability report.
 - Beginner tutorial.
 - Standard MSc thesis report.
-- Streamlit or equivalent live risk monitor.
+- Live risk monitor.
 - Supplier resilience scorecard.
 - Incident and post-mortem documentation.
 
 ## 10. Success Criteria
 The project is successful if it demonstrates:
-- Secure and reproducible execution across local and remote environments.
+- Secure and reproducible local execution.
 - Reliable ingestion and transformation of multi-source logistics data.
-- Correct handling of German-market text and regional identifiers.
+- Correct handling of German-market text and identifiers.
 - Historized supplier tracking and point-in-time correctness.
 - Validated SLA and alerting logic.
 - Explainable risk outputs for business stakeholders.
-- A defensible thesis narrative that links engineering choices to business impact.
+- A defensible thesis narrative linking engineering choices to business impact.
 
 ## 11. Constraints and Assumptions
 ### Constraints
-- Development must happen in Codespace, not directly in Databricks notebooks.
-- Execution must be remote on Databricks through dbt, CLI, or equivalent governed tooling.
-- Sensitive values must be managed through secrets, not committed into source control.
+- Development and execution must run in Codespaces without paid cloud dependencies.
+- Sensitive values must not be committed into source control.
 - German text and regional data require explicit normalization rules.
 
 ### Assumptions
-- Databricks compute is available for validated execution steps.
-- The project will use synthetic or controlled datasets where needed.
-- The thesis scope prioritizes engineering rigor and governance over volume.
+- Synthetic or controlled datasets are used where needed.
+- Thesis scope prioritizes engineering rigor and governance over scale.
 
 ## 12. Risks
-- Connectivity issues between Codespace and Databricks.
-- Data quality failures caused by encoding, schema drift, or late-arriving records.
+- Local environment drift between sessions.
+- Data quality failures from encoding/schema drift/late arrivals.
 - Overfitting or weak generalization in predictive models.
-- Insufficient evidence capture for defense or review.
-- Scope creep from attempting to build a full enterprise platform.
+- Insufficient evidence capture for defense.
+- Scope creep toward enterprise-scale infrastructure.
 
 ## 13. Mitigation Strategy
 - Use explicit phase and batch planning.
-- Record all commands and validation evidence in documentation.
-- Add checks for freshness, schema, and business rule compliance.
+- Record commands and validation evidence in docs.
+- Add freshness/schema/business-rule checks.
 - Use historized models and controlled incremental logic.
-- Keep the thesis focused on the most defensible business and engineering outcomes.
+- Keep thesis scope focused on defensible outcomes.
 
 ## 14. Delivery Approach
-The work is delivered in phases: infrastructure, ingestion, normalization, gold analytics, predictive intelligence, and operationalization. Each phase produces visible artifacts, validation evidence, and documentation suitable for thesis review and project handover.
+Work is delivered in phases: infrastructure, ingestion, normalization, gold analytics, predictive intelligence, and operationalization. Each phase produces artifacts and evidence suitable for thesis review and handover.
 
 ## 15. Final Outcome
-The final outcome is a governed, reproducible, and business-relevant logistics resilience platform that proves the ability to engineer, validate, and explain a modern analytics system at a master’s thesis level.
+A governed, reproducible, and business-relevant logistics resilience platform that proves the ability to engineer, validate, and explain a modern analytics system under real cost constraints.

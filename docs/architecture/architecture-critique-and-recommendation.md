@@ -1,94 +1,61 @@
 # Architecture Critique and Recommendation: Supply Chain Resilience Engine
 
 ## Purpose
-This section explains the architectural direction of the Supply Chain Resilience Engine and records the rationale for the stack choices made in the thesis project. Its goal is to show that the design is not only technically feasible, but also aligned with analytics engineering practice, reproducibility, and senior-level portfolio expectations.
+This document records the architecture direction after the compute-constraint pivot and explains why the DuckDB-native track is the primary execution path for this thesis repository.
 
 ## Architecture Assessment
-The proposed architecture is directionally strong. It demonstrates the right thesis-level ideas:
+The architecture remains strong because the core analytics engineering qualities are preserved:
 - Multi-source ingestion from operational and file-based systems.
-- A real developer inner loop with Git-managed code authored in Codespace.
-- Medallion layering for Bronze, Silver, and Gold transformation stages.
-- German-data normalization for encoding, regional identifiers, and text consistency.
-- Observability and validation through tests, lineage, and operational checks.
+- Real developer inner loop with Git-managed code in Codespaces.
+- Medallion layering for Bronze, Silver, and Gold stages.
+- German-data normalization for encoding and regional identifiers.
+- Observability and validation through tests, logs, and governance artifacts.
 
-Taken together, these choices form a credible senior-level story because they address not just analytics output, but also how the system is built, governed, and operated.
+These design elements are what make the work thesis-grade; they do not depend on a specific cloud runtime.
 
 ## Recommendation
-The main recommendation is to keep Databricks as a first-class execution platform rather than replacing it with DuckDB as the primary engine.
+The primary recommendation is to run the project as a DuckDB-native platform in GitHub Codespaces for the active implementation track.
 
-DuckDB is still useful, but as a supporting tool:
-- It can be used for local experimentation.
-- It can help validate logic quickly in a lightweight environment.
-- It can serve as a contingency when remote execution is not available.
-
-However, if the thesis objective is to demonstrate Databricks analytics engineering in a production-oriented setting, then Databricks should remain the target for dbt and Spark/PySpark workloads. In this model, Codespace remains the control plane for development, Git, and documentation, while Databricks provides the governed compute layer.
-
-That separation creates the strongest narrative:
-- Code is written and versioned in GitHub Codespace.
-- Execution occurs remotely in Databricks.
-- Validation is captured in dbt, tests, and documentation.
+Why this is the right primary choice now:
+- It is fully executable under strict no-paid-cloud constraints.
+- It preserves reproducibility and deterministic command evidence.
+- It avoids blocked dependencies on unavailable Spark-capable compute.
+- It supports staged growth into Silver/Gold modeling and ML workflows.
 
 ## Stack Positioning
-The stack should be layered rather than overloaded.
-
-### Core Stack
+### Core Stack (Primary)
 - GitHub Codespace for development, review, and orchestration control.
-- Databricks for remote execution and warehouse-scale compute.
-- dbt-databricks for governed transformations.
-- One reliable ingestion path to establish a fully working end-to-end flow.
+- DuckDB for local analytical execution and medallion persistence.
+- dbt-duckdb for governed SQL transformations.
+- Python scripts for ingestion, incremental processing, and ML tasks.
 
 ### Optional Extensions
-- Airbyte for realistic source synchronization, especially when simulating transactional systems such as Postgres.
-- Airflow for orchestration when scheduling, chaining, or operational control clearly improves the thesis narrative.
-- DuckDB for local prototypes, proof-of-concept testing, or fallback experimentation.
+- Airbyte for explicit source synchronization patterns.
+- Airflow for scheduling and dependency management where justified.
+- Databricks as a future enterprise upgrade path if non-free compute becomes available.
 
-## Critique of the Original Stack Framing
-A few refinements improve the architecture narrative significantly.
+## Critique of Prior Direction
+A Databricks-first execution narrative was previously reasonable, but current workspace constraints prevented Spark-capable runtime evidence in a free environment. Continuing to center Databricks as primary would have weakened delivery reliability.
 
-### Postgres Container
-The Postgres container is a strong choice because it simulates source heterogeneity and makes the ingestion story more realistic. It should be kept when the project needs to demonstrate multiple source types.
+The DuckDB pivot improves execution certainty while retaining analytical depth and governance rigor.
 
-### Airbyte and Airflow
-Airbyte and Airflow are credible additions, but they increase complexity. They should not be treated as mandatory blockers for the first working version.
+## Decision Framework Going Forward
+1. Keep DuckDB as the default execution target for all active batches.
+2. Keep Databricks artifacts as legacy context, not primary runtime dependencies.
+3. Evaluate extension tools only when they strengthen evidence quality.
+4. Preserve script-first reproducibility and Git traceability.
 
-The better approach is:
-- Build the smallest credible end-to-end system first.
-- Prove the Databricks + dbt pipeline with one ingestion path.
-- Add Airbyte only when a realistic external source sync story is needed.
-- Add Airflow only when orchestration is genuinely useful and does not distract from the core thesis narrative.
-
-### Databricks Community Edition Framing
-The architecture should avoid absolute claims. It is better to say that Databricks Community Edition is insufficient for the full governed stack required by this thesis, rather than claiming it cannot support the project at all.
-
-### Differentiating Value
-The strongest differentiator is not generic dashboarding. It is the combination of:
-- German-data normalization.
-- Historized supplier risk tracking.
-- Observability and SLA enforcement.
-- Governed remote execution in Databricks.
-
-That combination is much more defensible and thesis-worthy than a broad “real-time dashboard” claim.
-
-## Recommended Decision
-If the project were being scoped today, the recommended decision would be:
-1. Keep Databricks in the project as the primary execution environment.
-2. Use Codespace as the development and orchestration workspace.
-3. Use dbt-databricks as the main transformation path.
-4. Keep Postgres as a realistic secondary source for multi-source ingestion.
-5. Use DuckDB only as an optional local prototype or contingency.
-6. Treat Airbyte and Airflow as phase-two additions that are implemented only when they clearly support the thesis narrative.
-
-## Why This Is the Right Balance
-This approach gives the best mix of feasibility, academic rigor, and job-market signal.
-
-It proves that the project can:
-- Operate as a governed analytics engineering system.
-- Demonstrate Databricks-based production thinking.
-- Handle messy, multilingual, real-world data.
-- Show a realistic path from development to execution to validation.
-- Avoid unnecessary tooling complexity before the core architecture is proven.
+## Why This Balance Works
+This approach maximizes feasibility and defensibility:
+- Feasible: every core batch can run in Codespaces.
+- Defensible: evidence is reproducible without hidden external dependencies.
+- Relevant: architecture still demonstrates senior analytics engineering judgment.
 
 ## Conclusion
-The architecture should be read as a layered system with a clear center of gravity: Codespace for development, Databricks for execution, dbt for transformations, and supporting tools added only when they strengthen the narrative rather than dilute it.
+The project should now be interpreted as a local-first governed analytics platform:
+- Codespace for development and controlled execution.
+- DuckDB for data processing and medallion layers.
+- dbt and Python for transformations and intelligence.
+- Optional enterprise upgrades only after core evidence is complete.
 
-That is the most credible way to present the project as a thesis-level analytics engineering portfolio.
+This is the most credible path for timely thesis completion under current constraints.

@@ -1,17 +1,17 @@
 # dbt Commands
 
-This log captures dbt commands used for Batch 1.1 profile and connectivity validation.
+This log captures dbt commands for the DuckDB-native execution track.
 
 ## Local Preparation
 
 ### Install adapter
 ```bash
-pip install dbt-databricks
+pip install dbt-duckdb duckdb
 ```
 
-### Validate secrets are present
+### Validate local prerequisites
 ```bash
-./scripts/check_databricks_env.sh
+./scripts/check_duckdb_env.sh
 ```
 
 ## Profile Setup
@@ -28,5 +28,6 @@ dbt debug --profile governed_supply_chain_resilience --target dev
 ```
 
 ## Notes
-- Keep the profile value source as environment variables.
-- If `dbt debug` fails, capture the exact error in `docs/incidents/` and update the phase report.
+- Keep profile values environment-driven where useful (`DUCKDB_PATH`, schema vars).
+- Default DuckDB path is `data/duckdb/scr.duckdb`.
+- Capture dbt errors in phase reports and incidents documentation.

@@ -1,38 +1,45 @@
-# Phase 2 Autoloader Commands
+# Phase 2 Incremental Commands
 
-This log captures commands for Batch 2.2 (Databricks Autoloader Logic).
+This log captures commands for Batch 2.2 (DuckDB incremental ingestion).
 
-## Chunk 4: Incremental Landing with cloudFiles
+## Chunk 4: Incremental Landing (File-State Driven)
 
-### Local authoring and dry-run validation
+### Dry-run validation
 ```bash
 python3 scripts/autoloader_bronze.py \
   --dry-run \
-  --input-path dbfs:/tmp/scr/iot_landing \
-  --checkpoint-path dbfs:/tmp/scr/checkpoints/iot_events_raw
+  --input-pattern "data/iot_landing/*.jsonl" \
+  --db-path data/duckdb/scr.duckdb
 ```
 
-### Databricks runtime execution
+### Incremental ingestion run
 ```bash
 python3 scripts/autoloader_bronze.py \
-  --input-path dbfs:/tmp/scr/iot_landing \
-  --checkpoint-path dbfs:/tmp/scr/checkpoints/iot_events_raw
+  --input-pattern "data/iot_landing/*.jsonl" \
+  --db-path data/duckdb/scr.duckdb \
+  --schema bronze \
+  --table iot_events_raw
 ```
 
-### Optional continuous mode for debugging only
+### Verify newly ingested records
 ```bash
-python3 scripts/autoloader_bronze.py \
-  --input-path dbfs:/tmp/scr/iot_landing \
-  --checkpoint-path dbfs:/tmp/scr/checkpoints/iot_events_raw \
-  --continuous
+python3 - << 'PY'
+import duckdb
+conn = duckdb.connect("data/duckdb/scr.duckdb")
+print(conn.execute("select count(*) from bronze.iot_events_raw").fetchone()[0])
+print(conn.execute("select count(distinct source_file) from bronze.iot_events_raw").fetchone()[0])
+PY
 ```
 
 ## Run Summary
-- Cost-aware execution uses `availableNow` by default, so the stream processes currently available files and stops.
-- The stream target is `workspace.bronze.iot_events_raw` in the cost-constrained track.
-- Checkpointing should remain stable across reruns so only newly arrived files are processed.
+- Incremental behavior is controlled by `data/duckdb/ingestion_state/processed_iot_files.json`.
+- Only files not present in the state file are ingested on each run.
+- Target table is `bronze.iot_events_raw`.
+- Validation results:
+  - Initial check with no new files: `new files to ingest = 0`, table remained at 30 rows.
+  - After emitting one new file with 7 events: loader ingested exactly 7 new rows.
+  - Post-run verification: `table_count = 37`, `source_file_count = 3`.
 
 ## Notes
-- Autoloader requires a Databricks runtime and a Databricks-accessible landing path.
-- This batch is intentionally bounded to avoid always-on cluster cost.
+- This replaces the Databricks `cloudFiles` path for the DuckDB-native track.
 - Keep all command evidence synchronized with `docs/phase-reports/SCR-P2-B2.2-report.md`.

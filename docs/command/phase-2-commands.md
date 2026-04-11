@@ -1,6 +1,6 @@
 # Phase 2 Commands
 
-This log captures commands for Batch 2.1 (Multi-Source Ingestion).
+This log captures commands for Batch 2.1 (Multi-Source Ingestion, DuckDB-native).
 
 ## Chunk 1: Operational DB Simulation (Postgres in Docker)
 
@@ -23,13 +23,13 @@ chmod +x ./scripts/stop_postgres_source.sh
 
 ## Chunk 2: Source Sync Strategy (Core First)
 
-### Cost-constrained core path
-- Primary path in this track: local source simulation + Databricks Bronze table load.
+### Active core path
+- Primary path: local source simulation + DuckDB Bronze table load.
 - Airbyte remains optional extension and is deferred until MVP stability.
 
-### Bronze schema (Databricks SQL)
+### Bronze schema (DuckDB)
 ```sql
-CREATE SCHEMA IF NOT EXISTS workspace.bronze;
+CREATE SCHEMA IF NOT EXISTS bronze;
 ```
 
 ## Chunk 3: IoT Heartbeat Simulation
@@ -53,17 +53,15 @@ head -n 3 data/iot_landing/*.jsonl
 
 ### One-command Batch 2.1 local bootstrap
 ```bash
-chmod +x ./scripts/bootstrap_phase_2_1.sh
-./scripts/bootstrap_phase_2_1.sh
+chmod +x ./scripts/bootstrap_phase_2_1_duckdb.sh
+./scripts/bootstrap_phase_2_1_duckdb.sh
 ```
 
 ## Run Summary
-- Clean final run used 2 IoT files with 15 events per file, for 30 new records loaded.
-- The Bronze table load targeted `workspace.bronze.iot_events_raw`.
-- Because the landing directory had older files from earlier attempts, the cumulative table count reached 121 after the clean run.
-- Earlier non-clean runs showed 35 rows loaded because prior JSONL files remained in `data/iot_landing`.
+- Clean final run baseline: 2 IoT files x 15 events per file = 30 rows.
+- Bronze target: `bronze.iot_events_raw` in `data/duckdb/scr.duckdb`.
+- Re-runs are additive unless landing files are cleaned.
 
 ## Notes
-- This batch implements a cost-constrained ingestion MVP path.
-- Bronze ingestion SQL/table materialization is executed in Databricks after local generation, targeting `workspace.bronze` by default.
-- Keep all command evidence synchronized with `docs/phase-reports/SCR-P2-B2.1-report.md`.
+- This batch is fully local and does not require remote compute.
+- Keep evidence synchronized with `docs/phase-reports/SCR-P2-B2.1-report.md`.

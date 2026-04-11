@@ -1,8 +1,9 @@
 # governed-supply-chain-resilience
-A production-grade Analytics Engineering framework for predictive logistics. It integrates real-time IoT sensor streams with legacy ERP data using a Databricks Medallion Architecture. Features automated German market data normalization (AGS/ISO-8859-1), SCD Type 2 supplier tracking, and dbt-orchestrated ML risk scoring. #databricks #supply-chain
+A production-grade Analytics Engineering framework for predictive logistics. It integrates real-time IoT sensor streams with legacy ERP data using a DuckDB-native medallion-style architecture inside GitHub Codespaces. Features automated German market data normalization (AGS/ISO-8859-1), SCD Type 2 supplier tracking, and reproducible local SQL/Python execution. #duckdb #supply-chain
 
 ## Portfolio Navigation
 - Phase report templates and reporting guide: [docs/phase-reports/README.md](docs/phase-reports/README.md)
+- DuckDB command log: [docs/command/duckdb-commands.md](docs/command/duckdb-commands.md)
 
 ## Thesis Portfolio Map
 - Thesis Defense Brief: [docs/planning/thesis-execution-roadmap.md](docs/planning/thesis-execution-roadmap.md)
