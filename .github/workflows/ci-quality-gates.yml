@@ -40,3 +40,6 @@ jobs:
           else
             echo "No DuckDB artifact found in CI workspace; skipping runtime quality controls."
           fi
+
+      - name: Validate Phase 6.2 defense assets
+        run: python scripts/validate_phase_6_2_assets.py

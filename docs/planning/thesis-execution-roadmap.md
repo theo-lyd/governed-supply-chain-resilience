@@ -198,13 +198,30 @@ Goal: prove production readiness in a controlled local-first architecture.
 - Implement quality gates and observability checks.
 - Add freshness and incident logging controls.
 
+Status:
+- ✅ Completed/Verified (DuckDB controls + incident logging)
+- Key artifacts:
+  - `scripts/build_ops_phase_6_1.py`
+  - `scripts/bootstrap_phase_6_1.sh`
+  - `docs/command/phase-6-commands.md`
+  - `docs/phase-reports/SCR-P6-B6.1-report.md`
+
 ### Batch 6.2
 - Enforce PR validation pipeline.
 - Finalize defense-ready runbook and narrative assets.
 
+Status:
+- ✅ Completed/Verified (PR validation + defense package)
+- Key artifacts:
+  - `.github/workflows/ci-quality-gates.yml`
+  - `scripts/validate_phase_6_2_assets.py`
+  - `docs/planning/thesis-defense-runbook.md`
+  - `docs/planning/thesis-defense-narrative.md`
+  - `docs/phase-reports/SCR-P6-B6.2-report.md`
+
 Exit criteria:
-- CI gates enforce quality standards.
-- Documentation and evidence are defense-ready.
+- ✅ CI gates enforce quality standards.
+- ✅ Documentation and evidence are defense-ready.
 
 ---
 

@@ -18,6 +18,8 @@ A production-grade Analytics Engineering framework for predictive logistics. It 
 - Non-Technical Business Blueprint: [docs/business/strategic-business-blueprint.md](docs/business/strategic-business-blueprint.md)
 - Project Brief: [docs/business/project-brief.md](docs/business/project-brief.md)
 - Requirement Specification Document: [docs/specification/requirement-specification-document.md](docs/specification/requirement-specification-document.md)
+- Thesis Defense Runbook: [docs/planning/thesis-defense-runbook.md](docs/planning/thesis-defense-runbook.md)
+- Thesis Defense Narrative: [docs/planning/thesis-defense-narrative.md](docs/planning/thesis-defense-narrative.md)
 - Developer Inner Loop Walkthrough: [docs/planning/thesis-execution-roadmap.md](docs/planning/thesis-execution-roadmap.md)
 - German Data Normalization Appendix: [docs/planning/thesis-execution-roadmap.md](docs/planning/thesis-execution-roadmap.md)
 - Project Runbook: [docs/phase-reports/README.md](docs/phase-reports/README.md)
