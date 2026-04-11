@@ -7,6 +7,26 @@ cd "$ROOT_DIR"
 echo "=== Batch 6.1: Quality Gates, Freshness, and Incident Logging ==="
 echo
 
+echo "[0/3] Ensuring Bronze quarantine table exists"
+python3 - << 'PY'
+import duckdb
+
+conn = duckdb.connect("data/duckdb/scr.duckdb")
+conn.execute("CREATE SCHEMA IF NOT EXISTS bronze")
+conn.execute(
+    """
+    CREATE TABLE IF NOT EXISTS bronze.iot_events_quarantine (
+      source_file VARCHAR,
+      source_line_number INTEGER,
+      raw_record VARCHAR,
+      reject_reason VARCHAR,
+      rejected_at TIMESTAMP DEFAULT current_timestamp
+    )
+    """
+)
+print("bronze.iot_events_quarantine is ready")
+PY
+
 echo "[1/3] Running Phase 6.1 controls"
 python3 scripts/build_ops_phase_6_1.py \
   --db-path data/duckdb/scr.duckdb \
