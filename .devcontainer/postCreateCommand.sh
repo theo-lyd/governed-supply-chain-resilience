@@ -19,9 +19,8 @@ python3 -m pip install databricks-cli==0.234.0
 echo "[3/7] Installing dbt-databricks (v1.11.6)"
 python3 -m pip install dbt-databricks==1.11.6
 
-# Install Airflow core dependencies for Phase 2 preview (pinned)
-echo "[4/7] Installing Apache Airflow (v2.8.4) - Optional for Preview"
-# python3 -m pip install apache-airflow==2.8.4 2>/dev/null || echo "  ⚠️  Airflow install skipped (can be done on-demand in Phase 2)"
+# Airflow is intentionally kept out of the base environment.
+echo "[4/7] Skipping Apache Airflow in base env (use dedicated venv script when needed)"
 
 # Install additional development tools
 echo "[5/7] Installing development tools (click, pyyaml, requests)"
@@ -44,4 +43,5 @@ echo "Next steps:"
 echo "  1. Ensure GitHub Codespaces Secrets are set (DATABRICKS_HOST, HTTP_PATH, TOKEN)"
 echo "  2. Run: ./scripts/bootstrap_phase_1_1.sh  (already done -skip if verified)"
 echo "  3. Run: ./scripts/bootstrap_phase_1_2.sh  (catalogs + seeds)"
-echo "  4. Verify: dbt debug && dbt docs generate"
+echo "  4. Optional (Phase 6): ./scripts/setup_airflow_venv.sh"
+echo "  5. Verify: dbt debug && dbt docs generate"

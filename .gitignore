@@ -142,6 +142,7 @@ celerybeat.pid
 .envrc
 .dbt/
 .venv
+.venv-airflow/
 env/
 venv/
 ENV/
