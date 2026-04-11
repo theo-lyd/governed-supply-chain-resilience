@@ -66,4 +66,48 @@ PY
 
 ## Notes
 - This batch implements BL-011 and BL-012 scope for deterministic city normalization and AGS harmonization.
-- Incremental lookback (BL-013) remains in Batch 3.2 scope.
+- Batch 3.2 adds BL-013 lookback handling and domain normalization for `LKW`/`Mio. EUR`.
+
+## Batch 3.2: Incremental Lookback + Domain Normalization
+
+### One-command Batch 3.2 bootstrap
+```bash
+chmod +x ./scripts/bootstrap_phase_3_2.sh
+./scripts/bootstrap_phase_3_2.sh
+```
+
+### Direct Batch 3.2 build command
+```bash
+python3 scripts/build_silver_phase_3_2.py \
+  --db-path data/duckdb/scr.duckdb \
+  --terms-csv data/reference/route_business_terms.csv \
+  --lookback-hours 48
+```
+
+### Validate LKW and Mio. EUR normalization
+```bash
+python3 - << 'PY'
+import duckdb
+conn = duckdb.connect("data/duckdb/scr.duckdb")
+print(conn.execute("""
+select route_code, vehicle_type_raw, vehicle_type, contract_value_raw, contract_value_million_eur
+from silver.route_business_terms_normalized
+order by route_code
+""").fetchall())
+PY
+```
+
+### Validate lookback parity
+```bash
+python3 - << 'PY'
+import duckdb
+conn = duckdb.connect("data/duckdb/scr.duckdb")
+max_ts = conn.execute("select max(event_ts) from silver.iot_events_normalized").fetchone()[0]
+source_count = conn.execute(f"""
+select count(*) from silver.iot_events_normalized
+where event_ts >= (timestamp '{max_ts}' - interval '48 hours')
+""").fetchone()[0]
+curated_count = conn.execute("select count(*) from silver.iot_events_curated").fetchone()[0]
+print(source_count, curated_count)
+PY
+```

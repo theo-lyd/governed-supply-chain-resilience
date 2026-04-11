@@ -82,3 +82,17 @@ Purpose:
 - Build and validate Silver normalization outputs with route-level AGS harmonization.
 Result:
 - Produced `silver.dim_route_geo` and `silver.iot_events_normalized` with zero null AGS values and full route coverage.
+
+### 2026-04-11 - Phase 3.2 lookback and domain normalization build
+Commands:
+```bash
+python3 -m py_compile scripts/build_silver_phase_3_2.py
+python3 scripts/build_silver_phase_3_2.py \
+	--db-path data/duckdb/scr.duckdb \
+	--terms-csv data/reference/route_business_terms.csv \
+	--lookback-hours 48
+```
+Purpose:
+- Build curated Silver outputs using lookback refresh logic and normalize `LKW`/`Mio. EUR` domain fields.
+Result:
+- Produced `silver.route_business_terms_normalized` and refreshed `silver.iot_events_curated` with zero null normalization fields.

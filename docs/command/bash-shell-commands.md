@@ -61,3 +61,15 @@ Purpose:
 - Execute Batch 3.1 end to end on a rebuilt Bronze baseline.
 Result:
 - Silver normalization and AGS harmonization tables built and verified successfully.
+
+### 2026-04-11 - Phase 3.2 execution flow
+Commands:
+```bash
+bash -n scripts/bootstrap_phase_3_2.sh
+chmod +x scripts/bootstrap_phase_3_2.sh
+./scripts/bootstrap_phase_3_2.sh
+```
+Purpose:
+- Execute Batch 3.2 incremental lookback and domain normalization flow.
+Result:
+- Curated Silver table refreshed for lookback window with complete domain normalization coverage.

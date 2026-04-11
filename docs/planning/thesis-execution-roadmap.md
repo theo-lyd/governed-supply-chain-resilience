@@ -108,9 +108,19 @@ Status:
 - Normalize domain abbreviations and currency forms.
 - Add incremental lookback logic for late-arriving telemetry.
 
+Status:
+- ✅ Completed/Verified (DuckDB Silver curated)
+- Key artifacts:
+  - `data/reference/route_business_terms.csv`
+  - `scripts/build_silver_phase_3_2.py`
+  - `scripts/bootstrap_phase_3_2.sh`
+  - `docs/phase-reports/SCR-P3-B3.2-report.md`
+
 Exit criteria:
-- Deterministic normalization tests pass.
-- AGS mappings are auditable and reproducible.
+- ✅ Deterministic normalization tests pass.
+- ✅ AGS mappings are auditable and reproducible.
+- ✅ Incremental lookback handling validated.
+- ✅ Domain normalization for `LKW` and `Mio. EUR` validated.
 
 ---
 
