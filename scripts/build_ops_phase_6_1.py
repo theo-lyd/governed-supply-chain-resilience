@@ -24,6 +24,8 @@ def main() -> None:
     except ModuleNotFoundError as exc:
         raise SystemExit("duckdb is not installed. Run: pip install duckdb") from exc
 
+    duckdb_errors = (duckdb.Error,)
+
     db_path = Path(args.db_path)
     if not db_path.exists():
         raise SystemExit(f"DuckDB file not found: {db_path}. Run earlier phases first.")
@@ -156,7 +158,7 @@ def main() -> None:
                 row_count, max_ts = conn.execute(
                     f"SELECT count(*), max({ts_column}) FROM {table_name}"
                 ).fetchone()
-            except Exception as exc:
+            except duckdb_errors as exc:
                 row_count, max_ts = 0, None
                 freshness_rows.append((table_name, ts_column, threshold_hours, "FAILED", f"table_or_column_error:{exc}"))
                 conn.execute(
@@ -205,7 +207,7 @@ def main() -> None:
 
             try:
                 failed_rows = int(conn.execute(sql).fetchone()[0] or 0)
-            except Exception as exc:
+            except duckdb_errors as exc:
                 failed_rows = 1
                 details = f"{details}; query_error:{exc}"
 
