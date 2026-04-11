@@ -16,8 +16,11 @@ python3 ./scripts/iot_emitter.py --output-dir data/iot_landing --iterations 2 --
 echo "[3/5] Verifying emitted files"
 ls -1 data/iot_landing | tail -n 5
 
-echo "[4/5] Loading IoT files into DuckDB Bronze table"
-python3 ./scripts/ingest_iot_to_duckdb.py --input-pattern "data/iot_landing/*.jsonl"
+echo "[4/5] Loading IoT files into DuckDB Bronze table (incremental + idempotent)"
+python3 ./scripts/autoloader_bronze.py \
+	--input-pattern "data/iot_landing/*.jsonl" \
+	--db-path data/duckdb/scr.duckdb \
+	--state-file data/duckdb/ingestion_state/processed_iot_files.json
 
 echo "[5/5] Quick verification query"
 python3 - << 'PY'

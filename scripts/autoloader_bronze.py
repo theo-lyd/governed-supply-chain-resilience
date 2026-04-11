@@ -66,24 +66,49 @@ def save_state(path: str, processed_files: set[str]) -> None:
     )
 
 
-def read_rows(file_paths: list[str]) -> list[tuple[str, str, str, float, float, int, str]]:
-    rows: list[tuple[str, str, str, float, float, int, str]] = []
+def read_rows(
+    file_paths: list[str],
+) -> tuple[
+    list[tuple[str, str, str, float, float, int, str, int]],
+    list[tuple[str, int, str, str]],
+]:
+    rows: list[tuple[str, str, str, float, float, int, str, int]] = []
+    rejects: list[tuple[str, int, str, str]] = []
+    required = ["event_ts", "sensor_id", "route_code", "temperature_c", "humidity_pct", "battery_mv"]
+
     for file_path in file_paths:
+        source_file = Path(file_path).name
         with open(file_path, "r", encoding="utf-8") as handle:
-            for line in handle:
-                record = json.loads(line)
-                rows.append(
-                    (
-                        record["event_ts"],
-                        record["sensor_id"],
-                        record["route_code"],
-                        float(record["temperature_c"]),
-                        float(record["humidity_pct"]),
-                        int(record["battery_mv"]),
-                        Path(file_path).name,
+            for line_number, line in enumerate(handle, start=1):
+                raw_line = line.rstrip("\n")
+                try:
+                    record = json.loads(raw_line)
+                except json.JSONDecodeError:
+                    rejects.append((source_file, line_number, raw_line, "malformed_json"))
+                    continue
+
+                missing = [k for k in required if k not in record or record[k] in (None, "")]
+                if missing:
+                    rejects.append((source_file, line_number, raw_line, f"missing_fields:{','.join(missing)}"))
+                    continue
+
+                try:
+                    rows.append(
+                        (
+                            str(record["event_ts"]),
+                            str(record["sensor_id"]),
+                            str(record["route_code"]),
+                            float(record["temperature_c"]),
+                            float(record["humidity_pct"]),
+                            int(record["battery_mv"]),
+                            source_file,
+                            line_number,
+                        )
                     )
-                )
-    return rows
+                except (TypeError, ValueError):
+                    rejects.append((source_file, line_number, raw_line, "invalid_numeric_cast"))
+
+    return rows, rejects
 
 
 def print_config(config: IncrementalConfig) -> None:
@@ -116,7 +141,7 @@ def main() -> None:
         raise SystemExit("duckdb is not installed. Run: pip install duckdb") from exc
 
     Path(config.db_path).parent.mkdir(parents=True, exist_ok=True)
-    rows = read_rows(new_files)
+    rows, rejects = read_rows(new_files)
 
     full_table = f"{config.schema}.{config.table}"
     with duckdb.connect(config.db_path) as conn:
@@ -131,23 +156,95 @@ def main() -> None:
               humidity_pct DOUBLE,
               battery_mv INTEGER,
               source_file VARCHAR,
+              source_line_number INTEGER,
               ingested_at TIMESTAMP DEFAULT current_timestamp
             )
             """
         )
-        conn.executemany(
-            f"""
-            INSERT INTO {full_table}
-            (event_ts, sensor_id, route_code, temperature_c, humidity_pct, battery_mv, source_file)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            rows,
+
+        existing_cols = {r[1] for r in conn.execute(f"PRAGMA table_info('{full_table}')").fetchall()}
+        if "source_line_number" not in existing_cols:
+            conn.execute(f"ALTER TABLE {full_table} ADD COLUMN source_line_number INTEGER")
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS bronze.iot_events_quarantine (
+              source_file VARCHAR,
+              source_line_number INTEGER,
+              raw_record VARCHAR,
+              reject_reason VARCHAR,
+              rejected_at TIMESTAMP DEFAULT current_timestamp
+            )
+            """
         )
+
+        if rejects:
+            conn.executemany(
+                """
+                INSERT INTO bronze.iot_events_quarantine
+                (source_file, source_line_number, raw_record, reject_reason)
+                VALUES (?, ?, ?, ?)
+                """,
+                rejects,
+            )
+
+        if rows:
+            conn.execute("DROP TABLE IF EXISTS temp_bronze_iot_stage")
+            conn.execute(
+                """
+                CREATE TEMP TABLE temp_bronze_iot_stage (
+                  event_ts TIMESTAMP,
+                  sensor_id VARCHAR,
+                  route_code VARCHAR,
+                  temperature_c DOUBLE,
+                  humidity_pct DOUBLE,
+                  battery_mv INTEGER,
+                  source_file VARCHAR,
+                  source_line_number INTEGER
+                )
+                """
+            )
+            conn.executemany(
+                """
+                INSERT INTO temp_bronze_iot_stage
+                (event_ts, sensor_id, route_code, temperature_c, humidity_pct, battery_mv, source_file, source_line_number)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+            conn.execute(
+                f"""
+                INSERT INTO {full_table}
+                (event_ts, sensor_id, route_code, temperature_c, humidity_pct, battery_mv, source_file, source_line_number)
+                SELECT
+                  s.event_ts,
+                  s.sensor_id,
+                  s.route_code,
+                  s.temperature_c,
+                  s.humidity_pct,
+                  s.battery_mv,
+                  s.source_file,
+                  s.source_line_number
+                FROM temp_bronze_iot_stage s
+                LEFT JOIN {full_table} t
+                  ON t.event_ts = s.event_ts
+                 AND t.sensor_id = s.sensor_id
+                 AND t.route_code = s.route_code
+                 AND COALESCE(t.source_file, '') = COALESCE(s.source_file, '')
+                 AND COALESCE(t.source_line_number, -1) = COALESCE(s.source_line_number, -1)
+                WHERE t.sensor_id IS NULL
+                """
+            )
+
         total = conn.execute(f"SELECT count(*) FROM {full_table}").fetchone()[0]
+        quarantined = conn.execute("SELECT count(*) FROM bronze.iot_events_quarantine").fetchone()[0]
 
     save_state(config.state_file, processed.union(new_files))
 
-    print(f"Loaded {len(rows)} rows from {len(new_files)} new file(s) into {full_table}")
+    print(f"Valid rows parsed: {len(rows)}")
+    print(f"Rejected rows quarantined this run: {len(rejects)}")
+    print(f"Total quarantined rows: {quarantined}")
+    print(f"Loaded deduplicated rows from {len(new_files)} new file(s) into {full_table}")
     print(f"Current row_count: {total}")
     print(f"State file updated: {config.state_file}")
 
