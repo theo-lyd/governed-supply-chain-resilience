@@ -48,3 +48,16 @@ Purpose:
 - Validate local prerequisites and dbt profile connectivity to DuckDB.
 Result:
 - dbt local target validation passed.
+
+### 2026-04-11 - Phase 3.1 execution flow
+Commands:
+```bash
+bash -n scripts/bootstrap_phase_3_1.sh
+chmod +x scripts/bootstrap_phase_3_1.sh
+./scripts/bootstrap_phase_2_1_duckdb.sh
+./scripts/bootstrap_phase_3_1.sh
+```
+Purpose:
+- Execute Batch 3.1 end to end on a rebuilt Bronze baseline.
+Result:
+- Silver normalization and AGS harmonization tables built and verified successfully.

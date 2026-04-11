@@ -1,0 +1,4 @@
+route_code,origin_city_raw,destination_city_raw,origin_ags,destination_ags,origin_state,destination_state
+HAM-BER,Hamburg,Berlin,02000000,11000000,Hamburg,Berlin
+MUC-FRA,Muenchen,Frankfurt am Main,09162000,06412000,Bayern,Hessen
+CGN-STR,Koeln,Stuttgart,05315000,08111000,Nordrhein-Westfalen,Baden-Wuerttemberg

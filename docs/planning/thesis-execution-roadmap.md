@@ -95,6 +95,15 @@ Goal: apply deterministic normalization with German-market constraints.
 - Implement umlaut transliteration and text standardization macros.
 - Harmonize AGS codes and canonical geography entities.
 
+Status:
+- ✅ Completed/Verified (DuckDB Silver normalization)
+- Key artifacts:
+  - `data/reference/route_ags_mapping.csv`
+  - `scripts/build_silver_phase_3_1.py`
+  - `scripts/bootstrap_phase_3_1.sh`
+  - `docs/command/phase-3-commands.md`
+  - `docs/phase-reports/SCR-P3-B3.1-report.md`
+
 ### Batch 3.2
 - Normalize domain abbreviations and currency forms.
 - Add incremental lookback logic for late-arriving telemetry.

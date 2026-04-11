@@ -71,3 +71,14 @@ Purpose:
 - Validate incremental file detection and resulting table/source-file counts.
 Result:
 - Confirmed no-op behavior without new files and expected count growth after new file arrival.
+
+### 2026-04-11 - Phase 3.1 Silver build implementation
+Commands:
+```bash
+python3 -m py_compile scripts/build_silver_phase_3_1.py
+python3 scripts/build_silver_phase_3_1.py --db-path data/duckdb/scr.duckdb --mapping-csv data/reference/route_ags_mapping.csv
+```
+Purpose:
+- Build and validate Silver normalization outputs with route-level AGS harmonization.
+Result:
+- Produced `silver.dim_route_geo` and `silver.iot_events_normalized` with zero null AGS values and full route coverage.
