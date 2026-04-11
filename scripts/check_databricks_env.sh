@@ -18,8 +18,8 @@ for v in "${required_vars[@]}"; do
 done
 
 if [[ "$missing" -eq 1 ]]; then
-  echo "\nOne or more required Databricks environment variables are missing."
-  echo "Set them in GitHub Codespaces Secrets, then restart the terminal/session."
+  echo "\nDatabricks extension-path variables are not fully configured."
+  echo "This is optional for the DuckDB-first track; configure only if running Databricks extension workflows."
   exit 1
 fi
 

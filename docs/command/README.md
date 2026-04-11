@@ -16,6 +16,7 @@ Policy:
 - [Phase 3 Commands](phase-3-commands.md)
 - [Phase 4 Commands](phase-4-commands.md)
 - [Phase 5 Commands](phase-5-commands.md)
+- [Phase 6 Commands](phase-6-commands.md)
 
 ## Legacy Track
 - [Databricks Commands](databricks-commands.md)

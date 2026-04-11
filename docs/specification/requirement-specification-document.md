@@ -4,7 +4,7 @@
 This document defines the functional and non-functional requirements for the Supply Chain Resilience Engine. It translates the project vision into implementation-ready requirements that can be traced through the development phases, validation steps, and thesis deliverables.
 
 ## 2. System Overview
-The system ingests logistics data from multiple sources, standardizes and enriches it in a medallion architecture, computes risk and SLA metrics, and exposes business outputs such as dashboards, alerts, and scorecards. Development occurs in GitHub Codespace, while execution occurs on Databricks through governed tooling.
+The system ingests logistics data from multiple sources, standardizes and enriches it in a medallion architecture, computes risk and SLA metrics, and exposes business outputs such as dashboards, alerts, and scorecards. Development and primary execution occur in GitHub Codespaces with DuckDB-native tooling; Databricks remains an optional extension path.
 
 ## 3. Business Objectives
 - Detect shipment risk earlier than traditional tracking methods.
@@ -30,7 +30,7 @@ Requirements in this document are prioritized to support staged delivery.
 - Great Expectations-style validation.
 - Monte Carlo or equivalent observability integration.
 - CI/CD support for governed development and testing.
-- Phased stack adoption where the Databricks + dbt core is delivered before optional orchestration/sync tools.
+- Phased stack adoption where the DuckDB + dbt-duckdb core is delivered first, with Databricks/Airflow/Airbyte as optional extension tracks.
 
 ### Out of Scope
 - A complete enterprise transportation management system.
@@ -58,11 +58,11 @@ Needs lineage, audit logs, and evidence of control execution.
 ### FR-1 Secure Remote Execution
 Priority: Must
 
-The system shall allow development in Codespace and execution on Databricks using authenticated, secret-managed connections.
+The system shall allow development and execution in Codespaces on a DuckDB-native runtime, with optional Databricks connectivity using authenticated, secret-managed connections when extension scope is enabled.
 
 Acceptance Criteria:
 - No credentials are hard-coded in source files.
-- `dbt debug` or equivalent connectivity validation succeeds.
+- `dbt debug` (DuckDB target) or equivalent connectivity validation succeeds.
 - Environment settings are documented and reproducible.
 
 ### FR-2 Raw Data Ingestion
@@ -214,7 +214,7 @@ The system must support data governance practices relevant to privacy, retention
 
 ### Privacy and Governance Requirements
 - PII must be masked or hashed where applicable.
-- Unity Catalog tables should include descriptions and tags.
+- When Databricks extension scope is enabled, Unity Catalog tables should include descriptions and tags.
 - Sensitive datasets must be handled with least-privilege access.
 
 ## 9. Business Rules

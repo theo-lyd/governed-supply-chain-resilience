@@ -45,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--db-path", default="data/duckdb/scr.duckdb")
     parser.add_argument("--score-mean-drift-threshold", type=float, default=0.10)
     parser.add_argument("--positive-rate-drift-threshold", type=float, default=0.15)
+    parser.add_argument("--current-window-hours", type=int, default=24)
     return parser.parse_args()
 
 
@@ -64,6 +65,19 @@ def main() -> None:
         pred_rows = conn.execute("SELECT count(*) FROM analytics.ml_delay_predictions_baseline").fetchone()[0]
         if pred_rows == 0:
             raise SystemExit("analytics.ml_delay_predictions_baseline has no data. Run Batch 5.1 first.")
+
+        baseline_snapshot = conn.execute(
+            """
+            SELECT baseline_mean_score, baseline_positive_rate, snapshot_at
+            FROM analytics.ml_drift_baseline_snapshots
+            WHERE monitor_name = 'drift_monitor_v1'
+              AND snapshot_kind = 'train_baseline'
+            ORDER BY snapshot_at DESC
+            LIMIT 1
+            """
+        ).fetchone()
+        if baseline_snapshot is None:
+            raise SystemExit("Missing drift baseline snapshot. Run Batch 5.1 first.")
 
         conn.execute("CREATE SCHEMA IF NOT EXISTS analytics")
 
@@ -123,32 +137,28 @@ def main() -> None:
             insert_rows,
         )
 
-        baseline = conn.execute(
-            """
-            SELECT
-              AVG(delay_risk_score) AS baseline_mean_score,
-              AVG(predicted_delay) AS baseline_positive_rate
-            FROM analytics.ml_delay_predictions_baseline
-            """
-        ).fetchone()
-
         current = conn.execute(
-            """
+            f"""
             SELECT
               AVG(delay_risk_score) AS current_mean_score,
-              AVG(predicted_delay) AS current_positive_rate
+              AVG(predicted_delay) AS current_positive_rate,
+              COUNT(*) AS current_row_count
             FROM analytics.ml_delay_predictions_baseline
-            WHERE event_ts >= (
-              SELECT MAX(event_ts) - INTERVAL '24 hours'
-              FROM analytics.ml_delay_predictions_baseline
-            )
+            WHERE data_split = 'eval'
+              AND event_ts >= (
+                SELECT MAX(event_ts) - INTERVAL '{args.current_window_hours} hours'
+                FROM analytics.ml_delay_predictions_baseline
+                WHERE data_split = 'eval'
+              )
             """
         ).fetchone()
 
-        baseline_mean = float(baseline[0] or 0.0)
-        baseline_pos = float(baseline[1] or 0.0)
+        baseline_mean = float(baseline_snapshot[0] or 0.0)
+        baseline_pos = float(baseline_snapshot[1] or 0.0)
+        baseline_snapshot_at = baseline_snapshot[2]
         current_mean = float(current[0] or 0.0)
         current_pos = float(current[1] or 0.0)
+        current_rows = int(current[2] or 0)
 
         mean_delta = abs(current_mean - baseline_mean)
         pos_delta = abs(current_pos - baseline_pos)
@@ -172,6 +182,8 @@ def main() -> None:
               ?::DOUBLE AS positive_rate_abs_delta,
               ?::DOUBLE AS positive_rate_threshold,
               ?::INTEGER AS positive_rate_breach,
+              ?::INTEGER AS current_eval_row_count,
+              ?::TIMESTAMP AS baseline_snapshot_at,
               ?::INTEGER AS overall_drift_breach,
               current_timestamp AS evaluated_at,
               'drift_monitor_v1' AS monitor_name
@@ -187,6 +199,8 @@ def main() -> None:
                 pos_delta,
                 args.positive_rate_drift_threshold,
                 pos_breach,
+                current_rows,
+                baseline_snapshot_at,
                 overall_breach,
             ],
         )

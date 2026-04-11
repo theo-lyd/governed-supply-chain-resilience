@@ -10,14 +10,13 @@ echo "[PostCreateCommand] Starting Codespace post-create setup..."
 echo "[1/7] Updating system packages"
 apt-get update && apt-get install -y --no-upgrade git
 
-# Install Databricks CLI (pinned version)
-echo "[2/7] Installing Databricks CLI (v0.234.0)"
+# Install DuckDB-first dbt core dependencies
+echo "[2/7] Installing dbt-duckdb core"
 python3 -m pip install --upgrade pip
-python3 -m pip install databricks-cli==0.234.0
+python3 -m pip install dbt-duckdb
 
-# Install dbt-databricks (pinned version)
-echo "[3/7] Installing dbt-databricks (v1.11.6)"
-python3 -m pip install dbt-databricks==1.11.6
+# Databricks tooling is optional in this DuckDB-first track.
+echo "[3/7] Skipping Databricks CLI/dbt-databricks in base env (install on-demand if needed)"
 
 # Airflow is intentionally kept out of the base environment.
 echo "[4/7] Skipping Apache Airflow in base env (use dedicated venv script when needed)"
@@ -40,8 +39,9 @@ echo ""
 echo "✅ Postsetup complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Ensure GitHub Codespaces Secrets are set (DATABRICKS_HOST, HTTP_PATH, TOKEN)"
+echo "  1. Verify DuckDB profile and run dbt debug"
 echo "  2. Run: ./scripts/bootstrap_phase_1_1.sh  (already done -skip if verified)"
 echo "  3. Run: ./scripts/bootstrap_phase_1_2.sh  (catalogs + seeds)"
 echo "  4. Optional (Phase 6): ./scripts/setup_airflow_venv.sh"
-echo "  5. Verify: dbt debug && dbt docs generate"
+echo "  5. Optional: install Databricks tooling only for extension scenarios"
+echo "  6. Verify: dbt debug && dbt docs generate"
