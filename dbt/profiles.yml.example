@@ -4,7 +4,7 @@ governed_supply_chain_resilience:
     dev:
       type: databricks
       method: http
-      catalog: "{{ env_var('DATABRICKS_CATALOG_DEV', 'hive_metastore') }}"
+      catalog: "{{ env_var('DATABRICKS_CATALOG_DEV', 'workspace') }}"
       schema: "{{ env_var('DATABRICKS_SCHEMA_DEV', 'analytics') }}"
       host: "{{ env_var('DATABRICKS_HOST') }}"
       http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
@@ -14,7 +14,7 @@ governed_supply_chain_resilience:
     prod:
       type: databricks
       method: http
-      catalog: "{{ env_var('DATABRICKS_CATALOG_PROD', 'hive_metastore') }}"
+      catalog: "{{ env_var('DATABRICKS_CATALOG_PROD', 'workspace') }}"
       schema: "{{ env_var('DATABRICKS_SCHEMA_PROD', 'analytics') }}"
       host: "{{ env_var('DATABRICKS_HOST') }}"
       http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"

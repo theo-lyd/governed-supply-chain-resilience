@@ -33,16 +33,23 @@ This log captures commands for Batch 1.1 and Batch 1.2 (Connectivity, Security S
 
 ### Cost-constrained mode (no AWS account required)
 - If you cannot create a paid cloud account, run Batch 1.2 with Unity Catalog provisioning disabled.
-- This keeps the project moving with Databricks + dbt using `hive_metastore` as default catalog.
+- This keeps the project moving with Databricks + dbt using `workspace` as default catalog fallback.
 - Command:
 ```bash
 ENABLE_UNITY_CATALOG=0 ./scripts/bootstrap_phase_1_2.sh
 ```
 - Optional env vars for explicit non-UC catalog/schema naming:
-	- `DATABRICKS_CATALOG_DEV` (default: `hive_metastore`)
+	- `DATABRICKS_CATALOG_DEV` (default: `workspace`)
 	- `DATABRICKS_SCHEMA_DEV` (default: `analytics`)
-	- `DATABRICKS_CATALOG_PROD` (default: `hive_metastore`)
+	- `DATABRICKS_CATALOG_PROD` (default: `workspace`)
 	- `DATABRICKS_SCHEMA_PROD` (default: `analytics`)
+
+### Why Hive Metastore failed here
+- `hive_metastore` is the legacy Databricks metastore namespace, not the same thing as Unity Catalog storage root or the metastore record itself.
+- In this workspace, Hive Metastore legacy access is disabled, so any direct `hive_metastore` reference throws `UC_HIVE_METASTORE_DISABLED_EXCEPTION`.
+- That failure is not caused by “abandoning” Unity Catalog, storage root, or the metastore; it is caused by the workspace policy disabling legacy Hive Metastore access.
+- For this project, the working fallback is `workspace` catalog, which lets the cost-constrained track continue without paid cloud setup.
+- If Unity Catalog is later enabled with a managed location, you can switch back to the UC path without changing the local source generation flow.
 
 ### Add values to GitHub Codespaces Secrets
 - GitHub repository -> Settings -> Secrets and variables -> Codespaces.

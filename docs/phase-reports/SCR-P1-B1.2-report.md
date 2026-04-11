@@ -7,7 +7,7 @@
 - Date: 2026-04-11
 - Execution Date: 2026-04-11
 - Re-run Date: 2026-04-11
-- Environment: GitHub Codespace -> Databricks (hive_metastore fallback)
+- Environment: GitHub Codespace -> Databricks (workspace catalog fallback)
 
 ## Scope Definition
 - Chunk(s) in Scope:
@@ -36,7 +36,7 @@
 - **BL-003**: As a platform owner, I need Unity Catalog `dev` and `prod` initialized.
   - File: `scripts/bootstrap_phase_1_2.sh` (5-step catalog init: verify Batch 1.1 → CLI check → connectivity → catalog creation → schema setup)
   - Status: completed via cost-constrained fallback mode (`ENABLE_UNITY_CATALOG=0`)
-  - Validation reached workspace connectivity and established non-UC execution path using `hive_metastore`
+  - Validation reached workspace connectivity and established fallback execution path using default `workspace` catalog
 
 ## Tool and Methodology Justifications
 
@@ -47,7 +47,7 @@
 
 ### Architecture Decision: Unity Catalog as Target, Cost-Constrained Fallback as Execution Track
 - Correct/reference implementation for this project remains Unity Catalog-first governance.
-- Current execution track uses `hive_metastore` fallback because external storage-root provisioning is out of scope under the no-payment constraint.
+- Current execution track uses the `workspace` catalog fallback because external storage-root provisioning is out of scope under the no-payment constraint.
 - Decision objective: preserve delivery velocity and technical validity without violating user cost constraints.
 
 ### Why This Catalog Structure
@@ -59,6 +59,12 @@
   - silver = cleaned (deduped, validated)
   - gold = business-ready (dimension/fact models)
 - **Analytics Schema in dev**: Supports dbt runs, dashboards, exploration without polluting bronze/silver/gold
+
+### Hive Metastore Clarification
+- Hive Metastore is the legacy Databricks metastore namespace, not the same as the abandoned trio of storage root, metastore object, and Unity Catalog.
+- This workspace has legacy Hive Metastore access disabled, which caused `UC_HIVE_METASTORE_DISABLED_EXCEPTION` when `hive_metastore` was attempted.
+- The issue was resolved by switching the cost-constrained track to the `workspace` catalog fallback.
+- That means the failure was due to workspace policy, not because the project intentionally dropped Unity Catalog later in the flow.
 
 ## Commands Executed
 
@@ -99,7 +105,7 @@
 - ✅ Databricks SDK connectivity test passed (workspace reachable)
 - ✅ Re-run with refreshed PAT confirmed workspace access still works
 - ✅ Cost-constrained fallback path enabled (`ENABLE_UNITY_CATALOG=0`) for no-payment setup
-- ✅ dbt profile updated to use env-based catalog/schema defaults (`hive_metastore.analytics`) when Unity Catalog is unavailable
+- ✅ dbt profile updated to use env-based catalog/schema defaults (`workspace.analytics`) for fallback execution
 
 ### Execution Transcript
 ```
@@ -114,7 +120,7 @@
   Set ENABLE_UNITY_CATALOG=1 to provision dev/prod catalogs when storage is available.
 [5/5] Verifying catalog structure
   ✓ Cost-constrained mode active: Unity Catalog verification skipped
-  ✓ Continue using hive_metastore-backed schemas for Phase 2 development
+  ✓ Continue using workspace-backed schemas for Phase 2 development
 ✅ Batch 1.2 bootstrap completed successfully!
 ```
 
@@ -161,7 +167,7 @@ When regenerating or upgrading PAT for broader operations, include these scopes:
 - [x] `.devcontainer/devcontainer.json` includes pinned versions for dbt, Databricks CLI, Airflow
 - [x] `postCreateCommand.sh` automates core tool setup on Codespace rebuild
 - [x] Catalog strategy established for both tracks:
-  - Cost-constrained track: `hive_metastore` fallback active
+  - Cost-constrained track: `workspace` fallback active
   - Enterprise track: Unity Catalog optional with `ENABLE_UNITY_CATALOG=1`
 - [x] Naming conventions documented for medallion progression across either track
 - [x] Baseline governance path documented with explicit cost constraint handling
@@ -190,10 +196,16 @@ When regenerating or upgrading PAT for broader operations, include these scopes:
   - Maintain strict naming conventions, tests, and phase evidence.
   - Preserve optional UC upgrade path for future hardening.
 
+### Run Summary
+- Clean final run: 2 IoT files x 15 events each = 30 records loaded.
+- Target table: `workspace.bronze.iot_events_raw`.
+- Cumulative row count after clean run: 121.
+- Earlier run count: 35 rows when older JSONL files were still present in the landing directory.
+
 ## Handover Notes
 - What changed for the next batch:
   - Batch 1.2 is complete for the cost-constrained track: containerization and catalog fallback strategy are ready
-  - → Ready to proceed to Batch 2.1 using `hive_metastore.analytics`
+  - → Ready to proceed to Batch 2.1 using `workspace.analytics`
   
 - Risks/Dependencies:
   - Airflow installation optional in post-create; can be skipped if not needed yet

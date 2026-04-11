@@ -46,7 +46,7 @@ Goal: Establish secure, reproducible connectivity between Codespace and Databric
 - Chunk 5: Unity Catalog Initialization
   - Create separate `dev` and `prod` catalogs.
   - Apply baseline naming conventions and permission boundaries.
-  - ✅ COST-CONSTRAINED FALLBACK: proceed with `hive_metastore` defaults when UC storage root is unavailable
+  - ✅ COST-CONSTRAINED FALLBACK: proceed with `workspace` catalog defaults when UC storage root is unavailable
   - 🔁 OPTIONAL UPGRADE: enable Unity Catalog later with `ENABLE_UNITY_CATALOG=1` and `UNITY_CATALOG_STORAGE_ROOT`
 - Batch 1.2 Status:
   - ✅ COMPLETED/VERIFIED (Cost-Constrained Track) (2026-04-11)
@@ -54,7 +54,7 @@ Goal: Establish secure, reproducible connectivity between Codespace and Databric
 
 #### Architecture Decision Note (Phase 1.2)
 - Standard/target architecture remains Unity Catalog with dedicated environment boundaries and governed metadata.
-- Temporary implementation track uses `hive_metastore` due explicit user cost constraint: no paid cloud account setup and no card-linked account creation.
+- Temporary implementation track uses the `workspace` catalog fallback due explicit user cost constraint: no paid cloud account setup and no card-linked account creation.
 - This is an intentional scope adaptation, not a technical preference reversal.
 
 #### Why Excluding Unity Catalog Now
@@ -64,7 +64,7 @@ Goal: Establish secure, reproducible connectivity between Codespace and Databric
 
 #### Implementation and Performance Implications Without Unity Catalog
 - Implementation model:
-  - Continue with Databricks + dbt using `hive_metastore` and schema-level separation.
+  - Continue with Databricks + dbt using `workspace` catalog fallback and schema-level separation.
   - Keep naming conventions and medallion progression unchanged.
   - Maintain governance evidence through repository controls, dbt tests, and phase reports.
 - Performance expectations:
@@ -75,6 +75,12 @@ Goal: Establish secure, reproducible connectivity between Codespace and Databric
   - Reduced fine-grained governance and lineage controls compared with full UC.
   - Acceptable for current cost-constrained implementation track.
   - Tracked as optional uplift in later hardening.
+
+#### Hive Metastore Clarification
+- Hive Metastore is the legacy catalog namespace; it is not the abandoned trio of `storage_root`, metastore, and Unity Catalog.
+- In this workspace, Hive Metastore access is disabled at the workspace level, which is why direct `hive_metastore` execution failed.
+- The failure is therefore caused by workspace policy, not by the decision to skip paid cloud storage setup.
+- The operational fallback used by this project is `workspace`, not `hive_metastore`.
 
 ### Phase 1 Exit Criteria
 - ✅ Codespace can run `dbt debug` successfully against Databricks. (Batch 1.1)
@@ -102,6 +108,20 @@ Goal: Ingest multi-modal logistics data (IoT and ERP-like records) reliably and 
   - Validate initial full load plus incremental sync behavior for the chosen path.
 - Chunk 3: IoT Heartbeat Simulation
   - Implement `iot_emitter.py` to emit event files at a fixed interval to a landing zone.
+
+#### Execution Status (2026-04-11)
+- Implemented in repository:
+  - `sql/postgres/init_source.sql`
+  - `scripts/start_postgres_source.sh`
+  - `scripts/stop_postgres_source.sh`
+  - `scripts/iot_emitter.py`
+  - `scripts/bootstrap_phase_2_1.sh`
+  - `docs/command/phase-2-commands.md`
+  - `docs/phase-reports/SCR-P2-B2.1-report.md`
+- Batch 2.1 Status:
+  - ✅ COMPLETED/VERIFIED (2026-04-11)
+  - Local Postgres simulation, IoT emitter, and Databricks Bronze ingestion validated.
+  - Bronze evidence: `workspace.bronze.iot_events_raw` loaded with reproducible command path.
 
 ### Batch 2.2: Databricks Autoloader Logic
 - Chunk 4: Incremental Landing with `cloudFiles`
