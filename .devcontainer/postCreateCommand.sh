@@ -8,7 +8,7 @@ echo "[PostCreateCommand] Starting Codespace post-create setup..."
 
 # Update system packages
 echo "[1/7] Updating system packages"
-apt-get update && apt-get upgrade -y 2>/dev/null || true
+apt-get update && apt-get install -y --no-upgrade git
 
 # Install Databricks CLI (pinned version)
 echo "[2/7] Installing Databricks CLI (v0.234.0)"
@@ -21,7 +21,7 @@ python3 -m pip install dbt-databricks==1.11.6
 
 # Install Airflow core dependencies for Phase 2 preview (pinned)
 echo "[4/7] Installing Apache Airflow (v2.8.4) - Optional for Preview"
-python3 -m pip install apache-airflow==2.8.4 2>/dev/null || echo "  ⚠️  Airflow install skipped (can be done on-demand in Phase 2)"
+# python3 -m pip install apache-airflow==2.8.4 2>/dev/null || echo "  ⚠️  Airflow install skipped (can be done on-demand in Phase 2)"
 
 # Install additional development tools
 echo "[5/7] Installing development tools (click, pyyaml, requests)"
