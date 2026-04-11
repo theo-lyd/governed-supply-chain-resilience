@@ -109,3 +109,15 @@ Purpose:
 - Execute Batch 5.1 baseline feature engineering and delay-risk scoring workflow.
 Result:
 - Analytics feature, prediction, and model-metrics tables built with reproducible baseline metrics.
+
+### 2026-04-11 - Phase 5.2 execution flow
+Commands:
+```bash
+bash -n scripts/bootstrap_phase_5_2.sh
+chmod +x scripts/bootstrap_phase_5_2.sh
+./scripts/bootstrap_phase_5_2.sh
+```
+Purpose:
+- Execute Batch 5.2 route clustering and drift monitoring workflow.
+Result:
+- Route risk clusters and drift status artifacts built with no threshold breaches in current baseline window.

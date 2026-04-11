@@ -136,3 +136,17 @@ Purpose:
 - Build reproducible baseline ML features, risk scores, and evaluation metrics from Gold SLA outputs.
 Result:
 - Produced `analytics.ml_features_delay_baseline`, `analytics.ml_delay_predictions_baseline`, and `analytics.ml_model_metrics_baseline`.
+
+### 2026-04-11 - Phase 5.2 route clustering and drift monitoring
+Commands:
+```bash
+python3 -m py_compile scripts/build_ml_phase_5_2.py
+python3 scripts/build_ml_phase_5_2.py \
+	--db-path data/duckdb/scr.duckdb \
+	--score-mean-drift-threshold 0.10 \
+	--positive-rate-drift-threshold 0.15
+```
+Purpose:
+- Build route-risk clusters and drift-threshold monitoring outputs from baseline predictions.
+Result:
+- Produced `analytics.ml_route_risk_clusters` and `analytics.ml_drift_monitoring_status` with `overall_drift_breach = 0` for current data.

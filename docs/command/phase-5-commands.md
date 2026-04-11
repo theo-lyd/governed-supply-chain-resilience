@@ -55,3 +55,48 @@ PY
 ## Notes
 - Batch 5.1 implements BL-019 and BL-020 baseline scope for reproducible features and delay-risk scoring.
 - Batch 5.2 will add clustering and model drift monitoring thresholds.
+
+## Batch 5.2: Route Clustering + Drift Threshold Monitoring
+
+### One-command bootstrap
+```bash
+chmod +x ./scripts/bootstrap_phase_5_2.sh
+./scripts/bootstrap_phase_5_2.sh
+```
+
+### Direct build command
+```bash
+python3 scripts/build_ml_phase_5_2.py \
+	--db-path data/duckdb/scr.duckdb \
+	--score-mean-drift-threshold 0.10 \
+	--positive-rate-drift-threshold 0.15
+```
+
+### Validate route clustering output
+```bash
+python3 - << 'PY'
+import duckdb
+conn = duckdb.connect("data/duckdb/scr.duckdb")
+print(conn.execute("""
+select route_code, event_count, avg_delay_risk, predicted_delay_rate, risk_zone
+from analytics.ml_route_risk_clusters
+order by avg_delay_risk desc
+""").fetchall())
+PY
+```
+
+### Validate drift monitoring status
+```bash
+python3 - << 'PY'
+import duckdb
+conn = duckdb.connect("data/duckdb/scr.duckdb")
+print(conn.execute("""
+select monitor_name, mean_score_abs_delta, positive_rate_abs_delta, overall_drift_breach
+from analytics.ml_drift_monitoring_status
+""").fetchall())
+PY
+```
+
+## Updated Notes
+- Batch 5.1 implements BL-019 and BL-020 baseline scope.
+- Batch 5.2 implements BL-021 (route clustering) and BL-022 (drift thresholds and monitoring status).
