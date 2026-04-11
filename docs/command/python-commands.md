@@ -110,3 +110,18 @@ Purpose:
 - Build Gold SCD2 supplier history and point-in-time joined fact events.
 Result:
 - Produced `gold.dim_supplier_reliability_scd2` and `gold.fact_iot_events_pit` with zero null supplier assignments and no duplicate PIT matches.
+
+### 2026-04-11 - Phase 4.2 Gold SLA and lead-time build
+Commands:
+```bash
+python3 -m py_compile scripts/build_gold_phase_4_2.py
+python3 scripts/build_gold_phase_4_2.py \
+	--db-path data/duckdb/scr.duckdb \
+	--tz-csv data/reference/route_timezone_offsets.csv \
+	--breach-threshold-c 8.0 \
+	--rolling-window-rows 3
+```
+Purpose:
+- Build Gold SLA event fact with rolling breach flags and route-level timezone-safe lead-time mart.
+Result:
+- Produced `gold.fact_iot_events_sla` and `gold.mart_route_performance` with zero null timezone mappings.

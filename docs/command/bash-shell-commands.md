@@ -85,3 +85,15 @@ Purpose:
 - Execute Batch 4.1 Gold SCD2 and point-in-time join workflow.
 Result:
 - Gold historical dimension and PIT fact tables built with complete supplier coverage.
+
+### 2026-04-11 - Phase 4.2 execution flow
+Commands:
+```bash
+bash -n scripts/bootstrap_phase_4_2.sh
+chmod +x scripts/bootstrap_phase_4_2.sh
+./scripts/bootstrap_phase_4_2.sh
+```
+Purpose:
+- Execute Batch 4.2 rolling breach and timezone-safe lead-time workflow.
+Result:
+- Gold SLA fact and route-performance mart built with complete timezone mapping coverage.

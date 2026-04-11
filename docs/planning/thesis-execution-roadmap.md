@@ -145,9 +145,17 @@ Status:
 - Implement rolling cold-chain breach detection.
 - Compute timezone-safe lead-time metrics.
 
+Status:
+- ✅ Completed/Verified (DuckDB Gold SLA + lead-time)
+- Key artifacts:
+  - `data/reference/route_timezone_offsets.csv`
+  - `scripts/build_gold_phase_4_2.py`
+  - `scripts/bootstrap_phase_4_2.sh`
+  - `docs/phase-reports/SCR-P4-B4.2-report.md`
+
 Exit criteria:
-- Snapshot integrity verified.
-- SLA logic and lead-time metrics validated.
+- ✅ Snapshot integrity verified.
+- ✅ SLA logic and lead-time metrics validated.
 
 ---
 

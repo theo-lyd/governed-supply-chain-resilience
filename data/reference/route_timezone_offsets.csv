@@ -1,0 +1,4 @@
+route_code,origin_tz_offset_hours,destination_tz_offset_hours
+HAM-BER,1,1
+MUC-FRA,1,1
+CGN-STR,1,1

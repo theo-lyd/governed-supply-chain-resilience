@@ -71,3 +71,53 @@ PY
 ## Notes
 - Batch 4.1 implements BL-015 (SCD2 snapshots) and BL-016 (point-in-time joins).
 - SLA rolling-breach and timezone-safe lead-time logic are in Batch 4.2 scope.
+
+## Batch 4.2: Rolling Breach + Timezone-Safe Lead Time
+
+### One-command bootstrap
+```bash
+chmod +x ./scripts/bootstrap_phase_4_2.sh
+./scripts/bootstrap_phase_4_2.sh
+```
+
+### Direct build command
+```bash
+python3 scripts/build_gold_phase_4_2.py \
+  --db-path data/duckdb/scr.duckdb \
+  --tz-csv data/reference/route_timezone_offsets.csv \
+  --breach-threshold-c 8.0 \
+  --rolling-window-rows 3
+```
+
+### Validate rolling breach outputs
+```bash
+python3 - << 'PY'
+import duckdb
+conn = duckdb.connect("data/duckdb/scr.duckdb")
+print(conn.execute("""
+select route_code,
+       sum(is_temp_breach_flag) as breach_events,
+       sum(is_sustained_breach) as sustained_events
+from gold.fact_iot_events_sla
+group by 1
+order by 1
+""").fetchall())
+PY
+```
+
+### Validate timezone-safe lead-time outputs
+```bash
+python3 - << 'PY'
+import duckdb
+conn = duckdb.connect("data/duckdb/scr.duckdb")
+print(conn.execute("""
+select route_code, supplier_id, event_count, tz_safe_lead_time_hours
+from gold.mart_route_performance
+order by route_code
+""").fetchall())
+PY
+```
+
+## Updated Notes
+- Batch 4.1 implements BL-015 and BL-016.
+- Batch 4.2 implements BL-017 (rolling cold-chain breach) and BL-018 (timezone-safe lead-time metrics).
