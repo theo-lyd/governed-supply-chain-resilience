@@ -131,6 +131,16 @@ Goal: build historical and SLA-aware analytics models.
 - Implement supplier reliability SCD Type 2 snapshots.
 - Enforce point-in-time correctness in Gold joins.
 
+Status:
+- ✅ Completed/Verified (DuckDB Gold SCD2 + PIT)
+- Key artifacts:
+  - `data/reference/supplier_reliability_history.csv`
+  - `data/reference/route_supplier_mapping.csv`
+  - `scripts/build_gold_phase_4_1.py`
+  - `scripts/bootstrap_phase_4_1.sh`
+  - `docs/command/phase-4-commands.md`
+  - `docs/phase-reports/SCR-P4-B4.1-report.md`
+
 ### Batch 4.2
 - Implement rolling cold-chain breach detection.
 - Compute timezone-safe lead-time metrics.

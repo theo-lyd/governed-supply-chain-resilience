@@ -1,0 +1,10 @@
+supplier_id,supplier_name,supplier_city,reliability_score,effective_from
+SUP-001,NordLogistik GmbH,Hamburg,92.5,2026-04-08 00:00:00
+SUP-001,NordLogistik GmbH,Hamburg,90.2,2026-04-10 00:00:00
+SUP-001,NordLogistik GmbH,Hamburg,91.8,2026-04-11 00:00:00
+SUP-002,Bayern Freight AG,Muenchen,88.3,2026-04-08 00:00:00
+SUP-002,Bayern Freight AG,Muenchen,87.1,2026-04-10 00:00:00
+SUP-002,Bayern Freight AG,Muenchen,89.0,2026-04-11 00:00:00
+SUP-003,Rhein Cargo GmbH,Koeln,85.4,2026-04-08 00:00:00
+SUP-003,Rhein Cargo GmbH,Koeln,84.0,2026-04-10 00:00:00
+SUP-003,Rhein Cargo GmbH,Koeln,86.2,2026-04-11 00:00:00

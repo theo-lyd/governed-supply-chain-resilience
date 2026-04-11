@@ -1,0 +1,4 @@
+route_code,supplier_id,supplier_name,supplier_city
+HAM-BER,SUP-001,NordLogistik GmbH,Hamburg
+MUC-FRA,SUP-002,Bayern Freight AG,Muenchen
+CGN-STR,SUP-003,Rhein Cargo GmbH,Koeln

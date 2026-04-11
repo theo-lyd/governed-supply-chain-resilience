@@ -73,3 +73,15 @@ Purpose:
 - Execute Batch 3.2 incremental lookback and domain normalization flow.
 Result:
 - Curated Silver table refreshed for lookback window with complete domain normalization coverage.
+
+### 2026-04-11 - Phase 4.1 execution flow
+Commands:
+```bash
+bash -n scripts/bootstrap_phase_4_1.sh
+chmod +x scripts/bootstrap_phase_4_1.sh
+./scripts/bootstrap_phase_4_1.sh
+```
+Purpose:
+- Execute Batch 4.1 Gold SCD2 and point-in-time join workflow.
+Result:
+- Gold historical dimension and PIT fact tables built with complete supplier coverage.

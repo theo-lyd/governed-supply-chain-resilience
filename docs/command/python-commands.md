@@ -96,3 +96,17 @@ Purpose:
 - Build curated Silver outputs using lookback refresh logic and normalize `LKW`/`Mio. EUR` domain fields.
 Result:
 - Produced `silver.route_business_terms_normalized` and refreshed `silver.iot_events_curated` with zero null normalization fields.
+
+### 2026-04-11 - Phase 4.1 Gold SCD2 and PIT build
+Commands:
+```bash
+python3 -m py_compile scripts/build_gold_phase_4_1.py
+python3 scripts/build_gold_phase_4_1.py \
+	--db-path data/duckdb/scr.duckdb \
+	--supplier-history-csv data/reference/supplier_reliability_history.csv \
+	--route-supplier-csv data/reference/route_supplier_mapping.csv
+```
+Purpose:
+- Build Gold SCD2 supplier history and point-in-time joined fact events.
+Result:
+- Produced `gold.dim_supplier_reliability_scd2` and `gold.fact_iot_events_pit` with zero null supplier assignments and no duplicate PIT matches.

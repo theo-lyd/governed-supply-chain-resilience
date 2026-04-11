@@ -14,6 +14,7 @@ Policy:
 - [Phase 2 Commands](phase-2-commands.md)
 - [Phase 2 Incremental Loader Commands](phase-2-autoloader-commands.md)
 - [Phase 3 Commands](phase-3-commands.md)
+- [Phase 4 Commands](phase-4-commands.md)
 
 ## Legacy Track
 - [Databricks Commands](databricks-commands.md)
