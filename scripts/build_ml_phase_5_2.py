@@ -21,8 +21,11 @@ def kmeans_1d(values: list[float], k: int = 3, max_iter: int = 30) -> tuple[list
     for _ in range(max_iter):
         changed = False
 
+        def nearest_centroid(candidate: float, centroid_values: list[float]) -> int:
+            return min(range(k), key=lambda cluster_id: abs(candidate - centroid_values[cluster_id]))
+
         for idx, value in enumerate(values):
-            best = min(range(k), key=lambda c: abs(value - centroids[c]))
+            best = nearest_centroid(value, centroids)
             if assignments[idx] != best:
                 assignments[idx] = best
                 changed = True
