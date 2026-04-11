@@ -33,23 +33,36 @@ Goal: Establish secure, reproducible connectivity between Codespace and Databric
   - `docs/command/databricks-commands.md`
   - `docs/command/dbt-commands.md`
   - `docs/phase-reports/SCR-P1-B1.1-report.md`
-- Current blocker:
-  - `DATABRICKS_HOST`, `DATABRICKS_HTTP_PATH`, and `DATABRICKS_TOKEN` are not yet set in Codespaces Secrets.
-- Next action:
-  - Set secrets, run `dbt debug`, and update Batch 1.1 report from Draft to Completed/Verified.
+- Batch 1.1 Status:
+  - ✅ COMPLETED/VERIFIED (2026-04-11)
+  - dbt debug passed, Databricks connectivity verified, adapter installed
 
 ### Batch 1.2: Environment Containerization
 - Chunk 4: `.devcontainer` Engineering
   - Build a Codespace image that pre-installs `dbt-databricks`, Databricks CLI, and Airflow dependencies.
   - Pin versions for reproducibility.
+  - ✅ COMPLETED: `.devcontainer/devcontainer.json` with pinned tools, VS Code extensions, Python settings
+  - ✅ COMPLETED: `.devcontainer/postCreateCommand.sh` with 7-step automated setup
 - Chunk 5: Unity Catalog Initialization
   - Create separate `dev` and `prod` catalogs.
   - Apply baseline naming conventions and permission boundaries.
+  - ✅ COMPLETED: `dev` catalog with bronze/silver/gold/analytics schemas
+  - ✅ COMPLETED: `prod` catalog with bronze/silver/gold schemas
+- Batch 1.2 Status:
+  - ✅ COMPLETED/VERIFIED (2026-04-11)
+  - Catalogs initialized, containerization ready, token scope advisory documented
 
 ### Phase 1 Exit Criteria
-- Codespace can run `dbt debug` successfully against Databricks.
-- Secrets are injected securely with no plaintext credentials in Git.
-- `dev` and `prod` catalogs are discoverable and permissioned.
+- ✅ Codespace can run `dbt debug` successfully against Databricks. (Batch 1.1)
+- ✅ Secrets are injected securely with no plaintext credentials in Git. (Batch 1.1)
+- ✅ `dev` and `prod` catalogs are discoverable and permissioned. (Batch 1.2)
+- ✅ **PHASE 1 COMPLETE**: All foundation infrastructure ready for ingestion work.
+
+### Phase 1 Handoff Notes
+- Execution path: Batch 1.1 (Connectivity) → Batch 1.2 (Containerization, Catalogs)
+- Reports: [SCR-P1-B1.1-report.md](../phase-reports/SCR-P1-B1.1-report.md), [SCR-P1-B1.2-report.md](../phase-reports/SCR-P1-B1.2-report.md)
+- Ready to proceed: Phase 2 Batch 2.1 (Multi-Source Ingestion)
+- Estimated Phase 2 duration: 4-6 hours initial, includes Docker Postgres, IoT emitter, Bronze loads
 
 ---
 
