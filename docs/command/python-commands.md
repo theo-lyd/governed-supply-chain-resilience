@@ -125,3 +125,14 @@ Purpose:
 - Build Gold SLA event fact with rolling breach flags and route-level timezone-safe lead-time mart.
 Result:
 - Produced `gold.fact_iot_events_sla` and `gold.mart_route_performance` with zero null timezone mappings.
+
+### 2026-04-11 - Phase 5.1 baseline feature engineering and scoring
+Commands:
+```bash
+python3 -m py_compile scripts/build_ml_phase_5_1.py
+python3 scripts/build_ml_phase_5_1.py --db-path data/duckdb/scr.duckdb --threshold 0.50
+```
+Purpose:
+- Build reproducible baseline ML features, risk scores, and evaluation metrics from Gold SLA outputs.
+Result:
+- Produced `analytics.ml_features_delay_baseline`, `analytics.ml_delay_predictions_baseline`, and `analytics.ml_model_metrics_baseline`.

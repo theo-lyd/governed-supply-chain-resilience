@@ -97,3 +97,15 @@ Purpose:
 - Execute Batch 4.2 rolling breach and timezone-safe lead-time workflow.
 Result:
 - Gold SLA fact and route-performance mart built with complete timezone mapping coverage.
+
+### 2026-04-11 - Phase 5.1 execution flow
+Commands:
+```bash
+bash -n scripts/bootstrap_phase_5_1.sh
+chmod +x scripts/bootstrap_phase_5_1.sh
+./scripts/bootstrap_phase_5_1.sh
+```
+Purpose:
+- Execute Batch 5.1 baseline feature engineering and delay-risk scoring workflow.
+Result:
+- Analytics feature, prediction, and model-metrics tables built with reproducible baseline metrics.

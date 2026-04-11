@@ -166,6 +166,14 @@ Goal: produce explainable and monitored risk predictions.
 - Build delay prediction baseline (Python/dbt-integrated workflow).
 - Establish reproducible feature engineering from Bronze/Silver/Gold outputs.
 
+Status:
+- ✅ Completed/Verified (DuckDB baseline scoring)
+- Key artifacts:
+  - `scripts/build_ml_phase_5_1.py`
+  - `scripts/bootstrap_phase_5_1.sh`
+  - `docs/command/phase-5-commands.md`
+  - `docs/phase-reports/SCR-P5-B5.1-report.md`
+
 ### Batch 5.2
 - Add route risk clustering and model drift thresholds.
 - Define response playbook for degraded model performance.
