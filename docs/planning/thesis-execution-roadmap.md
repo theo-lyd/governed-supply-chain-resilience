@@ -26,6 +26,18 @@ Goal: Establish secure, reproducible connectivity between Codespace and Databric
   - Validate authentication and target resolution with `dbt debug`.
   - Use modern metadata access patterns compatible with current dbt-databricks capabilities.
 
+#### Execution Status (2026-04-10)
+- Implemented in repository:
+  - `dbt/profiles.yml.example`
+  - `scripts/check_databricks_env.sh`
+  - `docs/command/databricks-commands.md`
+  - `docs/command/dbt-commands.md`
+  - `docs/phase-reports/SCR-P1-B1.1-report.md`
+- Current blocker:
+  - `DATABRICKS_HOST`, `DATABRICKS_HTTP_PATH`, and `DATABRICKS_TOKEN` are not yet set in Codespaces Secrets.
+- Next action:
+  - Set secrets, run `dbt debug`, and update Batch 1.1 report from Draft to Completed/Verified.
+
 ### Batch 1.2: Environment Containerization
 - Chunk 4: `.devcontainer` Engineering
   - Build a Codespace image that pre-installs `dbt-databricks`, Databricks CLI, and Airflow dependencies.
