@@ -75,10 +75,30 @@ Prevention:
 ## 2026-04-12 - Controlled incident closure added
 Change:
 - Added `--close-resolved-incidents` option to `scripts/build_ops_phase_6_1.py`.
-- Added bootstrap toggle `CLOSE_RESOLVED_INCIDENTS=1` (default on) in `scripts/bootstrap_phase_6_1.sh`.
+- Added bootstrap toggle `CLOSE_RESOLVED_INCIDENTS` in `scripts/bootstrap_phase_6_1.sh` with default off.
 
 Behavior:
-- When current freshness/quality checks pass, matching historical `OPEN` incidents are marked `RESOLVED` with `resolved_at` timestamp.
+- When explicitly enabled and all current freshness/quality checks pass, matching historical `OPEN` incidents are marked `RESOLVED` with `resolved_at` timestamp.
 
 Operational note:
 - Closure is controlled and auditable; set `CLOSE_RESOLVED_INCIDENTS=0` to disable automated resolution.
+
+## 2026-04-12 - Legacy bronze ingest script de-Databricksed
+Change:
+- Replaced the legacy Databricks-specific Bronze loader with a DuckDB-native compatibility script at `scripts/ingest_iot_to_bronze.py`.
+
+Behavior:
+- The historical script name is preserved, but the implementation now loads local JSONL files into DuckDB Bronze without requiring Databricks credentials or the Databricks SQL connector.
+
+Operational note:
+- The `--catalog` argument is retained only for backward compatibility and is ignored in the DuckDB-native path.
+
+## 2026-04-12 - Incident closure counter made deterministic
+Change:
+- Replaced `UPDATE ... rowcount` accounting in `scripts/build_ops_phase_6_1.py` with explicit pre-update counts.
+
+Behavior:
+- The controlled-closure summary now reports the exact number of incidents resolved during the run, without depending on DuckDB rowcount semantics.
+
+Operational note:
+- This keeps the closure metric non-negative and stable across DuckDB versions and drivers.

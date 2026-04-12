@@ -1,92 +1,101 @@
 #!/usr/bin/env python3
+"""Compatibility Bronze loader for the DuckDB-native execution track.
+
+This preserves the historical command name while removing Databricks runtime
+coupling from the active repository path.
+"""
+
+from __future__ import annotations
+
 import argparse
 import glob
-import importlib
 import json
-import os
-from urllib.parse import urlparse
+from pathlib import Path
 
 
-def clean_host(raw_host: str) -> str:
-    parsed = urlparse(raw_host)
-    return parsed.netloc or raw_host.replace("https://", "").strip("/")
-
-
-def get_databricks_sql_module():
-    try:
-        return importlib.import_module("databricks.sql")
-    except ModuleNotFoundError as exc:
-        raise SystemExit(
-            "databricks-sql-connector is not installed. "
-            "Run: pip install databricks-sql-connector"
-        ) from exc
-
-
-def load_records(pattern: str) -> list[tuple[str, str, str, float, float, int]]:
-    records: list[tuple[str, str, str, float, float, int]] = []
-    files = sorted(glob.glob(pattern))
-    for file_path in files:
-        with open(file_path, "r", encoding="utf-8") as f:
-            for line in f:
-                data = json.loads(line)
-                records.append(
+def load_rows(pattern: str) -> list[tuple[str, str, str, float, float, int, str]]:
+    rows: list[tuple[str, str, str, float, float, int, str]] = []
+    for file_path in sorted(glob.glob(pattern)):
+        with open(file_path, "r", encoding="utf-8") as handle:
+            for line in handle:
+                payload = json.loads(line)
+                rows.append(
                     (
-                        data["event_ts"],
-                        data["sensor_id"],
-                        data["route_code"],
-                        float(data["temperature_c"]),
-                        float(data["humidity_pct"]),
-                        int(data["battery_mv"]),
+                        payload["event_ts"],
+                        payload["sensor_id"],
+                        payload["route_code"],
+                        float(payload["temperature_c"]),
+                        float(payload["humidity_pct"]),
+                        int(payload["battery_mv"]),
+                        Path(file_path).name,
                     )
                 )
-    return records
+    return rows
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Load local IoT JSONL files into Databricks Bronze table.")
+    parser = argparse.ArgumentParser(
+        description="Load local IoT JSONL files into DuckDB Bronze table."
+    )
     parser.add_argument("--input-pattern", default="data/iot_landing/*.jsonl")
-    parser.add_argument("--catalog", default=os.environ.get("DATABRICKS_CATALOG_DEV", "workspace"))
+    parser.add_argument(
+        "--catalog",
+        default=None,
+        help="Deprecated and ignored; retained for backward compatibility.",
+    )
+    parser.add_argument("--db-path", default="data/duckdb/scr.duckdb")
     parser.add_argument("--schema", default="bronze")
     parser.add_argument("--table", default="iot_events_raw")
     args = parser.parse_args()
 
-    raw_host = os.environ.get("DATABRICKS_HOST", "")
-    http_path = os.environ.get("DATABRICKS_HTTP_PATH", "")
-    token = os.environ.get("DATABRICKS_TOKEN", "")
+    try:
+        import duckdb
+    except ModuleNotFoundError as exc:
+        raise SystemExit("duckdb is not installed. Run: pip install duckdb") from exc
 
-    if not raw_host or not http_path or not token:
-        raise SystemExit("Missing one of DATABRICKS_HOST, DATABRICKS_HTTP_PATH, DATABRICKS_TOKEN")
-
-    host = clean_host(raw_host)
-    full_table = f"{args.catalog}.{args.schema}.{args.table}"
-    sql = get_databricks_sql_module()
-
-    rows = load_records(args.input_pattern)
+    rows = load_rows(args.input_pattern)
     if not rows:
         raise SystemExit(f"No records found for pattern: {args.input_pattern}")
 
-    with sql.connect(server_hostname=host, http_path=http_path, access_token=token) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {args.catalog}.{args.schema}")
-            cursor.execute(
-                f"""
-                CREATE TABLE IF NOT EXISTS {full_table} (
-                  event_ts STRING,
-                  sensor_id STRING,
-                  route_code STRING,
-                  temperature_c DOUBLE,
-                  humidity_pct DOUBLE,
-                  battery_mv INT
-                )
-                """
-            )
-            cursor.executemany(
-                f"INSERT INTO {full_table} VALUES (?, ?, ?, ?, ?, ?)",
-                rows,
-            )
-            cursor.execute(f"SELECT count(*) FROM {full_table}")
-            total = cursor.fetchone()[0]
+    db_path = Path(args.db_path)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
 
+    full_table = f"{args.schema}.{args.table}"
+    with duckdb.connect(str(db_path)) as conn:
+        conn.execute(f"CREATE SCHEMA IF NOT EXISTS {args.schema}")
+        conn.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {full_table} (
+              event_ts TIMESTAMP,
+              sensor_id VARCHAR,
+              route_code VARCHAR,
+              temperature_c DOUBLE,
+              humidity_pct DOUBLE,
+              battery_mv INTEGER,
+              source_file VARCHAR,
+              ingested_at TIMESTAMP DEFAULT current_timestamp
+            )
+            """
+        )
+
+        existing_cols = {
+            row[1] for row in conn.execute(f"PRAGMA table_info('{full_table}')").fetchall()
+        }
+        if "source_file" not in existing_cols:
+            conn.execute(f"ALTER TABLE {full_table} ADD COLUMN source_file VARCHAR")
+
+        conn.executemany(
+            f"""
+            INSERT INTO {full_table}
+            (event_ts, sensor_id, route_code, temperature_c, humidity_pct, battery_mv, source_file)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
+        total = conn.execute(f"SELECT count(*) FROM {full_table}").fetchone()[0]
+
+    if args.catalog:
+        print("Deprecated --catalog argument was ignored; DuckDB stores data locally.")
     print(f"Loaded {len(rows)} rows into {full_table}")
     print(f"Current row_count: {total}")
 

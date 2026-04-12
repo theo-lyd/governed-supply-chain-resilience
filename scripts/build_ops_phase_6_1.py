@@ -16,7 +16,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--close-resolved-incidents",
         action="store_true",
-        help="Mark matching OPEN incidents as RESOLVED when current checks pass.",
+        help="Mark matching OPEN incidents as RESOLVED only after all current checks pass.",
     )
     return parser.parse_args()
 
@@ -267,11 +267,21 @@ def main() -> None:
             )
 
         resolved_incidents = 0
-        if args.close_resolved_incidents:
+        if args.close_resolved_incidents and failed_freshness == 0 and failed_quality == 0:
             for table_name, _, _, status, _ in freshness_rows:
                 if status != "PASS":
                     continue
-                resolved_incidents += conn.execute(
+                pending = conn.execute(
+                    """
+                    SELECT count(*)
+                    FROM ops.incident_log
+                    WHERE status = 'OPEN'
+                      AND category = 'freshness'
+                      AND related_object = ?
+                    """,
+                    [table_name],
+                ).fetchone()[0]
+                conn.execute(
                     """
                     UPDATE ops.incident_log
                     SET status = 'RESOLVED', resolved_at = current_timestamp
@@ -280,12 +290,23 @@ def main() -> None:
                       AND related_object = ?
                     """,
                     [table_name],
-                ).rowcount
+                )
+                resolved_incidents += int(pending)
 
             for gate_name, _, status, _ in quality_rows:
                 if status not in {"PASS", "WARN"}:
                     continue
-                resolved_incidents += conn.execute(
+                pending = conn.execute(
+                    """
+                    SELECT count(*)
+                    FROM ops.incident_log
+                    WHERE status = 'OPEN'
+                      AND category = 'quality_gate'
+                      AND related_object = ?
+                    """,
+                    [gate_name],
+                ).fetchone()[0]
+                conn.execute(
                     """
                     UPDATE ops.incident_log
                     SET status = 'RESOLVED', resolved_at = current_timestamp
@@ -294,7 +315,10 @@ def main() -> None:
                       AND related_object = ?
                     """,
                     [gate_name],
-                ).rowcount
+                )
+                resolved_incidents += int(pending)
+        elif args.close_resolved_incidents:
+            print("Incident closure skipped: current controls did not fully pass.")
 
         open_incidents = conn.execute(
             "SELECT count(*) FROM ops.incident_log WHERE status = 'OPEN'"
