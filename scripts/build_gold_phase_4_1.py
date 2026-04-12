@@ -147,7 +147,7 @@ def main() -> None:
     if null_supplier > 0:
         raise SystemExit("Validation failed: unmatched route->supplier mapping in gold fact")
     if overlapping_intervals > 0:
-      raise SystemExit("Validation failed: overlapping SCD2 intervals detected")
+        raise SystemExit("Validation failed: overlapping SCD2 intervals detected")
 
     print("Phase 4 Batch 4.1 gold build completed successfully.")
 
