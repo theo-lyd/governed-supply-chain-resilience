@@ -121,3 +121,25 @@ Purpose:
 - Execute Batch 5.2 route clustering and drift monitoring workflow.
 Result:
 - Route risk clusters and drift status artifacts built with no threshold breaches in current baseline window.
+
+### 2026-04-12 - Phase 6 execution rerun
+Commands:
+```bash
+bash -n scripts/bootstrap_phase_6_1.sh
+./scripts/bootstrap_phase_6_1.sh
+python3 scripts/validate_phase_6_2_assets.py
+```
+Purpose:
+- Re-run Phase 6 control loop and defense-asset validation in the active workspace environment.
+Result:
+- Batch 6.1 controls executed successfully and Batch 6.2 asset validation passed.
+
+### 2026-04-12 - Controlled incident closure run
+Commands:
+```bash
+FRESHNESS_HOURS=1 CLOSE_RESOLVED_INCIDENTS=1 ./scripts/bootstrap_phase_6_1.sh
+```
+Purpose:
+- Resolve historical OPEN incidents only after fresh checks pass under a tighter freshness policy.
+Result:
+- OPEN incident count reduced to zero and historical incident trail was preserved as RESOLVED.

@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
 import argparse
 import glob
+import importlib
 import json
 import os
-from pathlib import Path
 from urllib.parse import urlparse
-
-from databricks import sql
 
 
 def clean_host(raw_host: str) -> str:
     parsed = urlparse(raw_host)
     return parsed.netloc or raw_host.replace("https://", "").strip("/")
+
+
+def get_databricks_sql_module():
+    try:
+        return importlib.import_module("databricks.sql")
+    except ModuleNotFoundError as exc:
+        raise SystemExit(
+            "databricks-sql-connector is not installed. "
+            "Run: pip install databricks-sql-connector"
+        ) from exc
 
 
 def load_records(pattern: str) -> list[tuple[str, str, str, float, float, int]]:
@@ -51,6 +59,7 @@ def main() -> None:
 
     host = clean_host(raw_host)
     full_table = f"{args.catalog}.{args.schema}.{args.table}"
+    sql = get_databricks_sql_module()
 
     rows = load_records(args.input_pattern)
     if not rows:

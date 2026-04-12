@@ -4,11 +4,23 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+PYTHON_BIN="python3"
+if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
+  PYTHON_BIN="$ROOT_DIR/.venv/bin/python"
+fi
+
+FRESHNESS_HOURS="${FRESHNESS_HOURS:-6}"
+CLOSE_RESOLVED_INCIDENTS="${CLOSE_RESOLVED_INCIDENTS:-1}"
+EXTRA_ARGS=()
+if [[ "$CLOSE_RESOLVED_INCIDENTS" == "1" ]]; then
+  EXTRA_ARGS+=("--close-resolved-incidents")
+fi
+
 echo "=== Batch 6.1: Quality Gates, Freshness, and Incident Logging ==="
 echo
 
 echo "[0/3] Ensuring Bronze quarantine table exists"
-python3 - << 'PY'
+"$PYTHON_BIN" - << 'PY'
 import duckdb
 
 conn = duckdb.connect("data/duckdb/scr.duckdb")
@@ -28,12 +40,13 @@ print("bronze.iot_events_quarantine is ready")
 PY
 
 echo "[1/3] Running Phase 6.1 controls"
-python3 scripts/build_ops_phase_6_1.py \
+"$PYTHON_BIN" scripts/build_ops_phase_6_1.py \
   --db-path data/duckdb/scr.duckdb \
-  --default-freshness-hours 6
+  --default-freshness-hours "$FRESHNESS_HOURS" \
+  "${EXTRA_ARGS[@]}"
 
 echo "[2/3] Latest freshness checks"
-python3 - << 'PY'
+"$PYTHON_BIN" - << 'PY'
 import duckdb
 conn = duckdb.connect("data/duckdb/scr.duckdb")
 rows = conn.execute("""
@@ -46,7 +59,7 @@ for row in rows:
 PY
 
 echo "[3/3] Open incidents"
-python3 - << 'PY'
+"$PYTHON_BIN" - << 'PY'
 import duckdb
 conn = duckdb.connect("data/duckdb/scr.duckdb")
 rows = conn.execute("""
@@ -57,6 +70,14 @@ order by detected_at desc
 """).fetchall()
 for row in rows:
     print(row)
+
+resolved = conn.execute("""
+select count(*)
+from ops.incident_log
+where status = 'RESOLVED'
+  and resolved_at >= current_timestamp - interval '1 hour'
+""").fetchone()[0]
+print(f"recently_resolved_incidents_last_1h: {resolved}")
 PY
 
 echo

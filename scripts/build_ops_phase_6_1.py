@@ -13,6 +13,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--db-path", default="data/duckdb/scr.duckdb")
     parser.add_argument("--default-freshness-hours", type=int, default=6)
     parser.add_argument("--fail-on-breach", action="store_true")
+    parser.add_argument(
+        "--close-resolved-incidents",
+        action="store_true",
+        help="Mark matching OPEN incidents as RESOLVED when current checks pass.",
+    )
     return parser.parse_args()
 
 
@@ -261,6 +266,36 @@ def main() -> None:
                 ],
             )
 
+        resolved_incidents = 0
+        if args.close_resolved_incidents:
+            for table_name, _, _, status, _ in freshness_rows:
+                if status != "PASS":
+                    continue
+                resolved_incidents += conn.execute(
+                    """
+                    UPDATE ops.incident_log
+                    SET status = 'RESOLVED', resolved_at = current_timestamp
+                    WHERE status = 'OPEN'
+                      AND category = 'freshness'
+                      AND related_object = ?
+                    """,
+                    [table_name],
+                ).rowcount
+
+            for gate_name, _, status, _ in quality_rows:
+                if status not in {"PASS", "WARN"}:
+                    continue
+                resolved_incidents += conn.execute(
+                    """
+                    UPDATE ops.incident_log
+                    SET status = 'RESOLVED', resolved_at = current_timestamp
+                    WHERE status = 'OPEN'
+                      AND category = 'quality_gate'
+                      AND related_object = ?
+                    """,
+                    [gate_name],
+                ).rowcount
+
         open_incidents = conn.execute(
             "SELECT count(*) FROM ops.incident_log WHERE status = 'OPEN'"
         ).fetchone()[0]
@@ -275,6 +310,8 @@ def main() -> None:
 
     print(f"Failed freshness checks: {failed_freshness}")
     print(f"Failed quality gates: {failed_quality}")
+    if args.close_resolved_incidents:
+        print(f"Resolved incidents in this run: {resolved_incidents}")
     print(f"Open incidents: {open_incidents}")
 
     if args.fail_on_breach and (failed_freshness > 0 or failed_quality > 0):

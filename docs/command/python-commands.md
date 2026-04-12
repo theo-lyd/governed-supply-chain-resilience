@@ -150,3 +150,30 @@ Purpose:
 - Build route-risk clusters and drift-threshold monitoring outputs from baseline predictions.
 Result:
 - Produced `analytics.ml_route_risk_clusters` and `analytics.ml_drift_monitoring_status` with `overall_drift_breach = 0` for current data.
+
+### 2026-04-12 - Phase 6 runtime compatibility and validation
+Commands:
+```bash
+/workspaces/governed-supply-chain-resilience/.venv/bin/python scripts/build_ops_phase_6_1.py --db-path data/duckdb/scr.duckdb --default-freshness-hours 6
+python3 scripts/validate_phase_6_2_assets.py
+```
+Purpose:
+- Execute Phase 6 controls using the configured virtualenv interpreter and validate defense assets.
+Result:
+- Controls populated `ops` check tables and incident log; defense asset validation passed.
+
+### 2026-04-12 - Incident closure verification query
+Commands:
+```bash
+python3 - << 'PY'
+import duckdb
+conn = duckdb.connect("data/duckdb/scr.duckdb")
+print('open', conn.execute("select count(*) from ops.incident_log where status='OPEN'").fetchone()[0])
+print('resolved', conn.execute("select count(*) from ops.incident_log where status='RESOLVED'").fetchone()[0])
+print('recent_resolved', conn.execute("select count(*) from ops.incident_log where status='RESOLVED' and resolved_at >= current_timestamp - interval '10 minute'").fetchone()[0])
+PY
+```
+Purpose:
+- Verify controlled closure behavior after Phase 6 rerun with tight freshness settings.
+Result:
+- Confirmed all historical OPEN incidents were transitioned to RESOLVED.

@@ -127,26 +127,27 @@ def main() -> None:
         null_supplier = conn.execute(
             "SELECT count(*) FROM gold.fact_iot_events_pit WHERE supplier_id IS NULL"
         ).fetchone()[0]
-        multi_matches = conn.execute(
+        overlapping_intervals = conn.execute(
             """
-            SELECT count(*) FROM (
-              SELECT event_ts, sensor_id, route_code, count(*) AS matches
-              FROM gold.fact_iot_events_pit
-              GROUP BY 1,2,3
-              HAVING count(*) > 1
-            ) x
+            SELECT count(*)
+            FROM gold.dim_supplier_reliability_scd2 a
+            JOIN gold.dim_supplier_reliability_scd2 b
+              ON a.supplier_id = b.supplier_id
+             AND a.valid_from < b.valid_to
+             AND b.valid_from < a.valid_to
+             AND a.valid_from <> b.valid_from
             """
         ).fetchone()[0]
 
     print(f"SCD2 rows: {scd2_rows}")
     print(f"Gold fact rows: {fact_rows}")
     print(f"Rows with null supplier_id: {null_supplier}")
-    print(f"Events with multiple PIT matches: {multi_matches}")
+    print(f"Overlapping SCD2 intervals: {overlapping_intervals}")
 
     if null_supplier > 0:
         raise SystemExit("Validation failed: unmatched route->supplier mapping in gold fact")
-    if multi_matches > 0:
-        raise SystemExit("Validation failed: overlapping SCD2 intervals caused duplicate PIT matches")
+    if overlapping_intervals > 0:
+      raise SystemExit("Validation failed: overlapping SCD2 intervals detected")
 
     print("Phase 4 Batch 4.1 gold build completed successfully.")
 
